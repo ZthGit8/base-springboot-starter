@@ -1,0 +1,19 @@
+my:
+  base:
+    log-print-enable: true
+server:
+  port: 8088
+spring:
+  data:
+    redis:
+      database: 5
+      host: 192.168.88.21
+      port: 6380
+      password: redispasswd
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 8
+          max-wait: 5000ms
+          min-idle: 1
+      timeout: 30s

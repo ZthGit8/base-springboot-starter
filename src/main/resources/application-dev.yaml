@@ -1,0 +1,19 @@
+my:
+  base:
+    log-print-enable: true
+server:
+  port:
+spring:
+  data:
+    redis:
+      database: 5
+      host:
+      port:
+      password:
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 8
+          max-wait: 5000ms
+          min-idle: 1
+      timeout: 30s
