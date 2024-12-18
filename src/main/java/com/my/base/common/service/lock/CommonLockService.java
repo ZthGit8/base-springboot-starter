@@ -1,0 +1,72 @@
+package com.my.base.common.service.lock;
+
+import cn.hutool.core.util.ObjectUtil;
+import com.my.base.common.enums.LockType;
+import com.my.base.common.exception.BusinessException;
+import com.my.base.common.result.ResultCode;
+import com.my.base.common.utils.RedisUtils;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.util.StringUtil;
+import org.apache.tomcat.util.buf.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+@Service
+@Slf4j
+public class CommonLockService implements LockService {
+
+    public <T> T executeWithLockThrows(String key, int waitTime, TimeUnit unit, SupplierThrow<T> supplier) throws Throwable {
+        boolean lockSuccess = tryGetLock(key, waitTime, unit);
+        if (!lockSuccess) {
+            throw new BusinessException(ResultCode.DISABLE_OPERATION.getCode(), ResultCode.DISABLE_OPERATION.getMessage());
+        }
+        try {
+            return supplier.get();//执行锁内的代码逻辑
+        } finally {
+            releaseLock(key);
+        }
+    }
+
+    @SneakyThrows
+    public <T> T executeWithLock(String key, int waitTime, TimeUnit unit, Supplier<T> supplier) {
+        return executeWithLockThrows(key, waitTime, unit, supplier::get);
+    }
+
+    @Override
+    public String getLockType() {
+        return LockType.COMMON_LOCK.getType();
+    }
+
+    public <T> T executeWithLock(String key, Supplier<T> supplier) {
+        return executeWithLock(key, -1, TimeUnit.MILLISECONDS, supplier);
+    }
+
+    /**
+     * 尝试获取锁
+     * @param key
+     * @param waitTime
+     * @param unit
+     * @return
+     */
+    private boolean tryGetLock(String key, int waitTime, TimeUnit unit) {
+        return Boolean.TRUE.equals(RedisUtils.setIfAbsent(key, "1", waitTime, unit));
+    }
+
+    /**
+     * 释放锁
+     * @param key
+     * @return
+     */
+    private boolean releaseLock(String key) {
+        return RedisUtils.releaseLock(key);
+    }
+
+
+}
