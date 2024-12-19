@@ -8,9 +8,9 @@
         <version>3.4.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>my.test</groupId>
+    <groupId>com.my.base</groupId>
     <artifactId>my-base-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <name>my-base-starter</name>
     <description>my-base-starter</description>
     <url/>
@@ -37,6 +37,8 @@
         <hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
         <redisson.version>3.40.2</redisson.version>
         <caffeine.version>3.1.8</caffeine.version>
+        <mybatis.plus.version>3.5.8</mybatis.plus.version>
+        <mysql.connector.version>8.0.33</mysql.connector.version>
     </properties>
     <dependencies>
         <dependency>
@@ -58,6 +60,23 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>${mybatis.plus.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql.connector.version}</version>
         </dependency>
 
         <dependency>
