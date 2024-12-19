@@ -11,6 +11,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
+/**
+ * 封装CompletableFuture的工具类
+ */
 public class CompletableFutureUtils {
 
     private static ThreadPoolExecutor commonThreadPoolExecutor;
@@ -44,18 +47,18 @@ public class CompletableFutureUtils {
      * 创建并行任务并执行,第一部分的执行逻辑返回值作为第二部分执行逻辑的参数传入
      *
      * @param list
-     * @param api01
-     * @param api02
+     * @param funcBefore
+     * @param funcAfter
      * @param exceptionHandle
      * @param <S>
      * @param <T>
      * @param <K>
      * @return
      */
-    public static <S, T, K> List<K> parallelFutureJoin(Collection<S> list, Function<S, T> api01, Function<T, K> api02, BiFunction<Throwable, S, K> exceptionHandle) {
+    public static <S, T, K> List<K> parallelFutureJoin(Collection<S> list, Function<S, T> funcBefore, Function<T, K> funcAfter, BiFunction<Throwable, S, K> exceptionHandle) {
         //规整所有任务
         List<CompletableFuture<K>> collectFuture = list.stream()
-                .map(s -> createFuture(api01, api02, exceptionHandle, s)).toList();
+                .map(s -> createFuture(funcBefore, funcAfter, exceptionHandle, s)).toList();
         //汇总所有任务，并执行join，全部执行完成后，统一返回
         return collectFuture.stream()
                 .map(CompletableFuture::join)
@@ -66,8 +69,8 @@ public class CompletableFutureUtils {
     /**
      * 创建单个CompletableFuture任务,编排任务
      *
-     * @param api01
-     * @param api02
+     * @param funcBefore
+     * @param funcAfter
      * @param exceptionHandle
      * @param s
      * @param <S>
@@ -75,8 +78,8 @@ public class CompletableFutureUtils {
      * @param <K>
      * @return
      */
-    private static <S, T, K> CompletableFuture<K> createFuture(Function<S, T> api01, Function<T, K> api02, BiFunction<Throwable, S, K> exceptionHandle, S s) {
-        return CompletableFuture.supplyAsync(() -> api01.apply(s)).thenApply(api02).exceptionally(e -> exceptionHandle.apply(e, s));
+    private static <S, T, K> CompletableFuture<K> createFuture(Function<S, T> funcBefore, Function<T, K> funcAfter, BiFunction<Throwable, S, K> exceptionHandle, S s) {
+        return CompletableFuture.supplyAsync(() -> funcBefore.apply(s), commonThreadPoolExecutor).thenApply(funcAfter).exceptionally(e -> exceptionHandle.apply(e, s));
     }
 
 
@@ -94,6 +97,10 @@ public class CompletableFutureUtils {
 
     /**
      * 设置CF状态为失败
+     *
+     * @param ex
+     * @param <T>
+     * @return
      */
     public static <T> CompletableFuture<T> failed(Throwable ex) {
         CompletableFuture<T> completableFuture = new CompletableFuture<>();
@@ -103,6 +110,10 @@ public class CompletableFutureUtils {
 
     /**
      * 设置CF状态为成功
+     *
+     * @param result
+     * @param <T>
+     * @return
      */
     public static <T> CompletableFuture<T> success(T result) {
         CompletableFuture<T> completableFuture = new CompletableFuture<>();
@@ -112,6 +123,10 @@ public class CompletableFutureUtils {
 
     /**
      * 将List<CompletableFuture<T>> 转为 CompletableFuture<List<T>>
+     *
+     * @param completableFutures
+     * @param <T>
+     * @return
      */
     public static <T> CompletableFuture<List<T>> sequence(Collection<CompletableFuture<T>> completableFutures) {
         return CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture<?>[0]))
@@ -121,9 +136,14 @@ public class CompletableFutureUtils {
                 );
     }
 
+
     /**
      * 将List<CompletableFuture<List<T>>> 转为 CompletableFuture<List<T>>
      * 多用于分页查询的场景
+     *
+     * @param completableFutures
+     * @param <T>
+     * @return
      */
     public static <T> CompletableFuture<List<T>> sequenceList(Collection<CompletableFuture<List<T>>> completableFutures) {
         return CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture<?>[0]))
@@ -135,12 +155,13 @@ public class CompletableFutureUtils {
 
     /**
      * 将List<CompletableFuture<Map<K, V>>> 转为 CompletableFuture<Map<K, V>>
-     *  @Param mergeFunction 自定义key冲突时的merge策略
+     *
      * @param completableFutures
      * @param mergeFunction
-     * @return
      * @param <K>
      * @param <V>
+     * @return
+     * @Param mergeFunction 自定义key冲突时的merge策略
      */
     public static <K, V> CompletableFuture<Map<K, V>> sequenceMap(
             Collection<CompletableFuture<Map<K, V>>> completableFutures, BinaryOperator<V> mergeFunction) {
@@ -153,6 +174,10 @@ public class CompletableFutureUtils {
 
     /**
      * 将List<CompletableFuture<T>> 转为 CompletableFuture<List<T>>，并过滤调null值
+     *
+     * @param completableFutures
+     * @param <T>
+     * @return
      */
     public static <T> CompletableFuture<List<T>> sequenceNonNull(Collection<CompletableFuture<T>> completableFutures) {
         return CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture<?>[0]))
@@ -163,9 +188,14 @@ public class CompletableFutureUtils {
                 );
     }
 
+
     /**
      * 将List<CompletableFuture<List<T>>> 转为 CompletableFuture<List<T>>，并过滤调null值
      * 多用于分页查询的场景
+     *
+     * @param completableFutures
+     * @param <T>
+     * @return
      */
     public static <T> CompletableFuture<List<T>> sequenceListNonNull(Collection<CompletableFuture<List<T>>> completableFutures) {
         return CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture<?>[0]))
@@ -175,10 +205,14 @@ public class CompletableFutureUtils {
                 );
     }
 
+
     /**
      * 将List<CompletableFuture<Map<K, V>>> 转为 CompletableFuture<Map<K, V>>
      *
-     * @Param filterFunction 自定义过滤策略
+     * @param completableFutures
+     * @param filterFunction
+     * @param <T>
+     * @return
      */
     public static <T> CompletableFuture<List<T>> sequence(Collection<CompletableFuture<T>> completableFutures,
                                                           Predicate<? super T> filterFunction) {
@@ -190,10 +224,14 @@ public class CompletableFutureUtils {
                 );
     }
 
+
     /**
      * 将List<CompletableFuture<List<T>>> 转为 CompletableFuture<List<T>>
      *
-     * @Param filterFunction 自定义过滤策略
+     * @param completableFutures
+     * @param filterFunction
+     * @param <T>
+     * @return
      */
     public static <T> CompletableFuture<List<T>> sequenceList(Collection<CompletableFuture<List<T>>> completableFutures,
                                                               Predicate<? super T> filterFunction) {
@@ -206,6 +244,11 @@ public class CompletableFutureUtils {
 
     /**
      * 将CompletableFuture<Map<K,V>>的list转为 CompletableFuture<Map<K,V>>。 多个map合并为一个map。 如果key冲突，采用新的value覆盖。
+     *
+     * @param completableFutures
+     * @param <K>
+     * @param <V>
+     * @return
      */
     public static <K, V> CompletableFuture<Map<K, V>> sequenceMap(
             Collection<CompletableFuture<Map<K, V>>> completableFutures) {
