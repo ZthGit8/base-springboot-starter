@@ -13,7 +13,16 @@ public class BaseProperties {
     /**
      * 是否打印或存储请求响应日志
      */
-    private boolean logPrintEnable;
+    private boolean requestLogEnable;
+
+    /**
+     * 是否存储慢Sql日志
+     */
+    private boolean slowSqlLogEnable;
+    /**
+     * 是否打印或存储Sql日志
+     */
+    private boolean sqlLogEnable;
     /**
      * 使用那种敏感词过滤策略 默认使用DFA，可以使用AC
      */

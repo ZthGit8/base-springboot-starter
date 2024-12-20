@@ -2,7 +2,7 @@ package com.my.base.common.aspect;
 
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.json.JSONUtil;
-import com.my.base.common.storage.log.LogStorage;
+import com.my.base.common.storage.log.RequestLogStorage;
 import com.my.base.common.utils.ConversionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -69,7 +69,7 @@ public class WebLogAspect {
         List<Object> paramList = Stream.of(joinPoint.getArgs())
                 .filter(args -> !(args instanceof HttpServletRequest))
                 .filter(args -> !(args instanceof HttpServletResponse))
-                .collect(Collectors.toList());
+                .toList();
         // 获取方法签名
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         // 获取方法参数
@@ -114,9 +114,9 @@ public class WebLogAspect {
         // 异步将日志信息存储到数据库
         threadPoolExecutor.execute(()->{
             // 获取所有LogStorage实现类的实例
-            Map<String, LogStorage> beansOfType = applicationContext.getBeansOfType(LogStorage.class);
+            Map<String, RequestLogStorage> beansOfType = applicationContext.getBeansOfType(RequestLogStorage.class);
             // 遍历所有LogStorage实例，调用save方法保存日志信息
-            beansOfType.values().forEach(logStorage -> logStorage.save(requestInfo.getRequestIp(),JSONUtil.toJsonStr(paramMap)));
+            beansOfType.values().forEach(requestLogStorage -> requestLogStorage.save(requestInfo.getRequestIp(),JSONUtil.toJsonStr(paramMap)));
         });
         // 返回目标方法的执行结果
         return result;

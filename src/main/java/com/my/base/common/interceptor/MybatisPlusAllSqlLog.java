@@ -12,6 +12,8 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.sql.SQLException;
@@ -21,8 +23,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 
+@Component
+@ConditionalOnProperty(name = "my.base.sql-log-enable", havingValue = "true")
 public class MybatisPlusAllSqlLog implements InnerInterceptor {
-    public static final Logger log = LoggerFactory.getLogger("sys-sql");
+    private static final Logger log = LoggerFactory.getLogger("sys-sql");
+
 
     @Override
     public void beforeQuery(Executor executor, MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
@@ -35,7 +40,7 @@ public class MybatisPlusAllSqlLog implements InnerInterceptor {
         logInfo(boundSql, ms, parameter);
     }
 
-    private static void logInfo(BoundSql boundSql, MappedStatement ms, Object parameter) {
+    public static void logInfo(BoundSql boundSql, MappedStatement ms, Object parameter) {
         try {
             log.info("parameter = " + parameter);
             // 获取到节点的id,即sql语句的id
@@ -51,7 +56,27 @@ public class MybatisPlusAllSqlLog implements InnerInterceptor {
         }
     }
 
-    // 封装了一下sql语句，使得结果返回完整xml路径下的sql语句节点id + sql语句
+    public static String logInfoFromStatement(BoundSql boundSql, MappedStatement ms) {
+        String sql = "";
+        try {
+            // 获取到节点的id,即sql语句的id
+            String sqlId = ms.getId();
+            // 获取节点的配置
+            Configuration configuration = ms.getConfiguration();
+            // 获取到最终的sql语句
+            sql = getSql(configuration, boundSql, sqlId);
+        } catch (Exception e) {
+            log.error("异常:{}", e.getLocalizedMessage(), e);
+        }
+        return sql;
+    }
+    /**
+     * 封装了一下sql语句，使得结果返回完整xml路径下的sql语句节点id + sql语句
+     * @param configuration
+     * @param boundSql
+     * @param sqlId
+     * @return
+     */
     public static String getSql(Configuration configuration, BoundSql boundSql, String sqlId) {
         return sqlId + ":" + showSql(configuration, boundSql);
     }
@@ -108,7 +133,7 @@ public class MybatisPlusAllSqlLog implements InnerInterceptor {
     private static String getParameterValue(Object obj) {
         String value;
         if (obj instanceof String) {
-            value = "'" + obj.toString() + "'";
+            value = "'" + obj + "'";
         } else if (obj instanceof Date) {
             DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.DEFAULT,
                     DateFormat.DEFAULT, Locale.CHINA);
