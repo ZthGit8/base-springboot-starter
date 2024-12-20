@@ -26,8 +26,10 @@ public class SensitiveWordBs {
      */
     private IWordFactory wordDeny;
 
+    private static final SensitiveWordBs INSTANCE = new SensitiveWordBs();
+
     public static SensitiveWordBs newInstance() {
-        return new SensitiveWordBs();
+        return INSTANCE;
     }
 
     /**
@@ -39,11 +41,13 @@ public class SensitiveWordBs {
      * @since 0.0.13
      */
     public SensitiveWordBs init() {
-
-        List<String> words = wordDeny.getWordList();
-        loadWord(words);
+        if (wordDeny != null) {
+            List<String> words = wordDeny.getWordList();
+            loadWord(words);
+        }
         return this;
     }
+
 
     /**
      * 过滤策略
