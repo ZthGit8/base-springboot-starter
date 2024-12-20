@@ -30,15 +30,15 @@ public class MyBaseAutoConfiguration {
         return Redisson.create(config);
     }
 
-    @Bean
-    public SensitiveWordBs sensitiveWordBs(BaseProperties properties) {
-        SensitiveWordFilter instance = DFAFilter.getInstance();
-        if (properties.getUseSensitiveWordType().equals("AC")) {
-            instance = ACFilter.getInstance();
-        }
-        return SensitiveWordBs.newInstance()
-                .filterStrategy(instance)
-                .init();
-    }
+//    @Bean
+//    public SensitiveWordBs sensitiveWordBs(BaseProperties properties) {
+//        SensitiveWordFilter instance = DFAFilter.getInstance();
+//        if (properties.getUseSensitiveWordType().equals("AC")) {
+//            instance = ACFilter.getInstance();
+//        }
+//        return SensitiveWordBs.newInstance()
+//                .filterStrategy(instance)
+//                .init();
+//    }
 
 }
