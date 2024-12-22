@@ -2,7 +2,9 @@ package com.my.base.config;
 
 import com.my.base.common.sensitive.*;
 import com.my.base.config.properties.BaseProperties;
+import feign.Request;
 import feign.RequestInterceptor;
+import feign.Retryer;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
@@ -39,6 +41,16 @@ public class MyBaseAutoConfiguration {
         return SensitiveWordBs.newInstance()
                 .filterStrategy(instance)
                 .init();
+    }
+
+    @Bean
+    public Request.Options options() {
+        return new Request.Options(30000,60000);
+    }
+
+    @Bean
+    public Retryer feignRetryer() {
+        return Retryer.NEVER_RETRY;
     }
 
 }
