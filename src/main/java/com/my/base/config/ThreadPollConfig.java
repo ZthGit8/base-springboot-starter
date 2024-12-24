@@ -1,6 +1,6 @@
 package com.my.base.config;
 
-import com.my.base.config.properties.BaseProperties;
+import com.my.base.config.property.BaseProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +15,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 @EnableAsync
-public class ThreadPollConfiguration implements AsyncConfigurer {
+public class ThreadPollConfig implements AsyncConfigurer {
     @Autowired
     private BaseProperties baseProperties;
 

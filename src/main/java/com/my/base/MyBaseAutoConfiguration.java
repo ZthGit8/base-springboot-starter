@@ -1,9 +1,8 @@
-package com.my.base.config;
+package com.my.base;
 
 import com.my.base.common.sensitive.*;
-import com.my.base.config.properties.BaseProperties;
+import com.my.base.config.property.BaseProperties;
 import feign.Request;
-import feign.RequestInterceptor;
 import feign.Retryer;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -31,7 +30,6 @@ public class MyBaseAutoConfiguration {
                 .setDatabase(redisProperties.getDatabase());
         return Redisson.create(config);
     }
-
     @Bean
     public SensitiveWordBs sensitiveWordBs(BaseProperties properties) {
         SensitiveWordFilter instance = DFAFilter.getInstance();

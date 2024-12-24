@@ -1,14 +1,20 @@
+project:
+  name: @project.name@
+
 my:
   base:
-    log-print-enable: true
+    request-log-enable: true
+    thread-prefix: @project.name@+"_"
+    slow-sql-log-enable: false
+    sql-log-enable: false
 server:
   port: 8088
 spring:
   datasource:
     username: root
-    password:
+    password: mysqlRootPassword
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://117.72.14.166:3306/jc-club?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false
+    url: jdbc:mysql://192.168.88.21:3308/jtr_havefun?characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true
     hikari:
       minimum-idle: 3
       maximum-pool-size: 10
@@ -27,3 +33,11 @@ spring:
           max-wait: 5000ms
           min-idle: 1
       timeout: 30s
+  cloud:
+    nacos:
+      server-addr: 192.168.88.21:8848
+      username: nacos
+      password: nacos888
+      config:
+        namespace: test
+        file-extension: yaml
