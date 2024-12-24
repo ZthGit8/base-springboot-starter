@@ -1,15 +1,31 @@
+project:
+  name: @project.name@
+
 my:
   base:
-    log-print-enable: true
+    request-log-enable: true
+    thread-prefix: @project.name@+"_"
+    slow-sql-log-enable: false
+    sql-log-enable: false
 server:
-  port:
+  port: 8088
 spring:
+  datasource:
+    username: root
+    password: mysqlRootPassword
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.88.21:3308/jtr_havefun?characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true
+    hikari:
+      minimum-idle: 3
+      maximum-pool-size: 10
+      max-lifetime: 30000   #不能小于30秒，否则默认回到1800秒
+      connection-test-query: SELECT 1
   data:
     redis:
       database: 5
-      host:
-      port:
-      password:
+      host: 192.168.88.21
+      port: 6380
+      password: redispasswd
       lettuce:
         pool:
           max-active: 20
@@ -17,3 +33,50 @@ spring:
           max-wait: 5000ms
           min-idle: 1
       timeout: 30s
+  cloud:
+    nacos:
+      server-addr: 192.168.88.21:8848
+      username: nacos
+      password: nacos888
+      config:
+#        namespace: test
+#        file-extension: yaml
+        import-check:
+          enabled: false
+      discovery:
+        namespace: test
+        service: base-starter
+        ip: 192.168.88.21:8848
+  rabbitmq:
+    # 动态创建和绑定队列、交换机的配置
+    modules:
+      # 正常队列
+      - routing-key: test
+        consumer: testConsumerService
+        producer: testProducerService
+        autoAck: false
+        queue:
+          name: test
+          dead-letter-exchange: dead
+          dead-letter-routing-key: dead
+          arguments:
+            # 1分钟(测试)，单位毫秒
+            x-message-ttl: 3000
+        exchange:
+          name: test
+
+      # 死信队列
+      - routing-key: dead
+        consumer: deadConsumerService
+        producer: deadProducerService
+        autoAck: false
+        queue:
+          name: dead
+        exchange:
+          name: dead
+
+    host: 192.168.88.21
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /

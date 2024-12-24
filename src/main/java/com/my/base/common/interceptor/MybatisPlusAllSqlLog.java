@@ -56,7 +56,7 @@ public class MybatisPlusAllSqlLog implements InnerInterceptor {
         }
     }
 
-    public static String logInfoFromStatement(BoundSql boundSql, MappedStatement ms) {
+    public static String logInfoFromStatement(BoundSql boundSql, MappedStatement ms, boolean isSqlException) {
         String sql = "";
         try {
             // 获取到节点的id,即sql语句的id
@@ -66,7 +66,11 @@ public class MybatisPlusAllSqlLog implements InnerInterceptor {
             // 获取到最终的sql语句
             sql = getSql(configuration, boundSql, sqlId);
         } catch (Exception e) {
-            log.error("异常:{}", e.getLocalizedMessage(), e);
+            if (isSqlException){
+                log.error("SQL Error: {}", sql);
+            } else {
+                log.error("error:{}", e.getLocalizedMessage(), e);
+            }
         }
         return sql;
     }

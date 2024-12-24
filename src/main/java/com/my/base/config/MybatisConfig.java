@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConditionalOnBean({SqlStatementInterceptor.class, MybatisPlusAllSqlLog.class})
-public class MybatisConfiguration {
+public class MybatisConfig {
 
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor(MybatisPlusAllSqlLog mybatisPlusAllSqlLog) {
