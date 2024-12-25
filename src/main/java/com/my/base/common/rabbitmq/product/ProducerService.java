@@ -1,14 +1,20 @@
 package com.my.base.common.rabbitmq.product;
 
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+
 /**
  * 生产者接口
  */
-public interface ProducerService {
+public interface ProducerService<T> {
+
 
  /**
-  * 发送消息
-  * @param message
+  *
+  * @param message  发送的消息
+  * @param confirmCallback 发布确认
+  * @param returnCallback 返回确认
   */
- void send(Object message);
+ void sendMsg(T message, RabbitTemplate.ConfirmCallback confirmCallback, RabbitTemplate.ReturnsCallback returnCallback);
 
 }
