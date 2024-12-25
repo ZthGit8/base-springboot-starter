@@ -39,5 +39,43 @@ spring:
       username: nacos
       password: nacos888
       config:
+        #        namespace: test
+        #        file-extension: yaml
+        import-check:
+          enabled: false
+      discovery:
         namespace: test
-        file-extension: yaml
+        service: base-starter
+        ip: 192.168.88.21:8848
+  rabbitmq:
+    # 动态创建和绑定队列、交换机的配置
+    modules:
+      # 正常队列
+      - routing-key: test
+        consumer: testConsumerService
+        producer: testProducerService
+        autoAck: false
+        queue:
+          name: test
+          dead-letter-exchange: dead
+          dead-letter-routing-key: dead
+          arguments:
+            # 1分钟(测试)，单位毫秒
+            x-message-ttl: 3000
+        exchange:
+          name: test
+
+      # 死信队列
+      - routing-key: dead
+        consumer: deadConsumerService
+        autoAck: false
+        queue:
+          name: dead
+        exchange:
+          name: dead
+
+    host: 192.168.88.21
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /

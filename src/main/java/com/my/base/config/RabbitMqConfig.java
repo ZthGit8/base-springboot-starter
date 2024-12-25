@@ -16,16 +16,17 @@ import com.my.base.common.rabbitmq.product.AbsProducerService;
 import com.my.base.common.rabbitmq.retry.CustomRetryListener;
 import com.my.base.config.property.ModuleProperties;
 import com.my.base.config.property.RabbitModuleProperties;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Primary;
 
 import java.util.HashMap;
 import java.util.List;
@@ -269,5 +270,18 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
             log.debug("绑定死信队列: 交换机: {}, 路由: {}", deadLetterExchange, deadLetterRoutingKey);
         }
         return new Queue(queue.getName(), queue.isDurable(), queue.isExclusive(), queue.isAutoDelete(), arguments);
+    }
+
+    /**
+     * 创建连接工厂，并启用发布确认
+     * @return
+     */
+    @Bean
+    @Primary
+    public ConnectionFactory connectionFactory() {
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+        connectionFactory.setPublisherConfirmType(CachingConnectionFactory.ConfirmType.CORRELATED); // 启用发布确认
+        connectionFactory.setPublisherReturns(true); // 启用返回确认模式
+        return connectionFactory;
     }
 }

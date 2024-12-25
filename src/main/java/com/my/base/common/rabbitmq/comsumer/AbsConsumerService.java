@@ -10,7 +10,7 @@ import java.io.IOException;
  * @date 2023年04月18日 17:53
  */
 @Slf4j
-public abstract class AbsConsumerService<T> implements ConsumerService {
+public abstract class AbsConsumerService implements ConsumerService {
 
     @Override
     public void onMessage(Message message, Channel channel) throws Exception {
