@@ -7,11 +7,14 @@ import feign.Retryer;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 
 @Configuration
@@ -39,6 +42,19 @@ public class MyBaseAutoConfiguration {
         return SensitiveWordBs.newInstance()
                 .filterStrategy(instance)
                 .init();
+    }
+
+    /**
+     * 创建连接工厂，并启用发布确认
+     * @return
+     */
+    @Bean
+    @Primary
+    public ConnectionFactory connectionFactory() {
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+        connectionFactory.setPublisherConfirmType(CachingConnectionFactory.ConfirmType.CORRELATED); // 启用发布确认
+        connectionFactory.setPublisherReturns(true); // 启用返回确认模式
+        return connectionFactory;
     }
 
     @Bean
