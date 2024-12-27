@@ -8,11 +8,11 @@ import lombok.Getter;
  */
 public enum  RabbitEnum {
 
-    QUEUE("xxx.{}.queue", "队列名称"),
+    QUEUE("{}.queue", "队列名称"),
 
-    EXCHANGE("xxx.{}.exchange", "交换机名称"),
+    EXCHANGE("{}.exchange", "交换机名称"),
 
-    ROUTER_KEY("xxx.{}.key", "路由名称"),
+    ROUTER_KEY("{}.key", "路由名称"),
     ;
 
     RabbitEnum(String value, String desc) {

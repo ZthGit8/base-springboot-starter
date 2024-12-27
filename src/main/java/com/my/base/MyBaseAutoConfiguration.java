@@ -2,6 +2,7 @@ package com.my.base;
 
 import com.my.base.common.sensitive.*;
 import com.my.base.config.property.BaseProperties;
+import com.my.base.config.property.RabbitModuleProperties;
 import feign.Request;
 import feign.Retryer;
 import org.redisson.Redisson;
@@ -10,6 +11,8 @@ import org.redisson.config.Config;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -50,8 +53,9 @@ public class MyBaseAutoConfiguration {
      */
     @Bean
     @Primary
-    public ConnectionFactory connectionFactory() {
-        CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+    @ConditionalOnBean(RabbitProperties.class)
+    public ConnectionFactory connectionFactory(RabbitProperties rabbitProperties) {
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory(rabbitProperties.getHost()+":"+rabbitProperties.getPort());
         connectionFactory.setPublisherConfirmType(CachingConnectionFactory.ConfirmType.CORRELATED); // 启用发布确认
         connectionFactory.setPublisherReturns(true); // 启用返回确认模式
         return connectionFactory;
