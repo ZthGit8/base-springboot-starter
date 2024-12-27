@@ -1,6 +1,6 @@
 project:
   name: @project.name@
-
+  version: @project.version@
 my:
   base:
     request-log-enable: true
@@ -39,8 +39,8 @@ spring:
       username: nacos
       password: nacos888
       config:
-#        namespace: test
-#        file-extension: yaml
+        #        namespace: test
+        #        file-extension: yaml
         import-check:
           enabled: false
       discovery:
@@ -78,4 +78,33 @@ spring:
     port: 5672
     username: guest
     password: guest
+    publisher-confirm-type: correlated
     virtual-host: /
+    ssl:
+      enabled: false
+
+springdoc:
+  # 配置Swagger UI的访问路径和排序方式
+  swagger-ui:
+    path: /swagger-ui.html  # Swagger UI的访问路径
+  api-docs:
+    enabled: true
+
+
+# knife4j的增强配置，不需要增强可以不配
+knife4j:
+  enable: true
+#  setting:
+#    # 设置界面语言
+#    language: zh-CN
+#    # 启用Swagger模型展示
+#    enable-swagger-models: true
+#    # 启用文档管理功能
+#    enable-document-manage: true
+#    # 启用OpenAPI 3.0的支持
+#    enable-open-api: true
+#    # 启用接口分组功能
+#    enable-group: true
+
+
+

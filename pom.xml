@@ -10,8 +10,8 @@
     </parent>
     <groupId>com.my.base</groupId>
     <artifactId>my-base-starter</artifactId>
-    <version>${project.version}$</version>
-    <name>${project.name}$</name>
+    <version>${project.version}</version>
+    <name>${project.name}</name>
     <description>my-base-starter</description>
     <url/>
     <licenses>
@@ -22,8 +22,8 @@
     </licenses>
     <developers>
         <developer>
-            <name>Your Name</name>
-            <email>your.email@example.com</email>
+            <name>zengtianhan</name>
+            <email>2674136003@qq.com</email>
         </developer>
     </developers>
     <properties>
@@ -41,6 +41,9 @@
         <redisson.version>3.40.2</redisson.version>
         <caffeine.version>3.1.8</caffeine.version>
         <mybatis.plus.version>3.5.8</mybatis.plus.version>
+        <springdoc.version>2.3.0</springdoc.version>
+        <swagger.version>2.2.22</swagger.version>
+        <knife4j.version>4.5.0</knife4j.version>
         <mysql.connector.version>8.0.33</mysql.connector.version>
     </properties>
     <dependencies>
@@ -73,6 +76,24 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-common</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+            <version>${knife4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>${swagger.version}</version>
         </dependency>
 
         <dependency>

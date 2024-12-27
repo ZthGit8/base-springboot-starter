@@ -1,6 +1,6 @@
 project:
   name: @project.name@
-
+  version: @project.version@
 my:
   base:
     request-log-enable: true
@@ -78,4 +78,11 @@ spring:
     port: 5672
     username: guest
     password: guest
+    publisher-confirm-type: correlated
     virtual-host: /
+    ssl:
+      enabled: false
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+

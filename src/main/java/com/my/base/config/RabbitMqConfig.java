@@ -18,15 +18,12 @@ import com.my.base.config.property.ModuleProperties;
 import com.my.base.config.property.RabbitModuleProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
-import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
 import java.util.HashMap;
 import java.util.List;
@@ -63,7 +60,7 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
     private final ConfigService configService;
 
     @Value("${project.name}")
-    private static String dataId;
+    private static String dataId = "base-starter";
 
 
     @Autowired
@@ -78,31 +75,11 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
     public void afterSingletonsInstantiated() {
 
         try {
+            // 监听配置中心
             configService.addListener(dataId, "DEFAULT_GROUP", new Listener() {
-
                 @Override
                 public void receiveConfigInfo(String configInfo) {
-                    StopWatch stopWatch = StopWatch.create("MQ");
-                    stopWatch.start();
-                    log.debug("初始化MQ配置");
-                    List<ModuleProperties> modules = rabbitModuleProperties.getModules();
-                    if (CollUtil.isEmpty(modules)) {
-                        log.warn("未配置MQ");
-                        return;
-                    }
-                    for (ModuleProperties module : modules) {
-                        try {
-                            Queue queue = genQueue(module);
-                            Exchange exchange = genQueueExchange(module);
-                            queueBindExchange(queue, exchange, module);
-                            bindProducer(module);
-                            bindConsumer(queue, exchange, module);
-                        } catch (Exception e) {
-                            log.error("初始化失败", e);
-                        }
-                    }
-                    stopWatch.stop();
-                    log.info("初始化MQ配置成功耗时: {}ms", stopWatch.getTotal(TimeUnit.MILLISECONDS));
+                    register();
                 }
 
                 @Override
@@ -110,11 +87,37 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
                     return null;
                 }
             });
+            // 启动时加载配置
+            //register();
         } catch (NacosException e) {
             log.error("初始化MQ配置失败 {}", e.getMessage());
             throw new RuntimeException(e);
         }
 
+    }
+
+    private void register() {
+        StopWatch stopWatch = StopWatch.create("MQ");
+        stopWatch.start();
+        log.debug("初始化MQ配置");
+        List<ModuleProperties> modules = rabbitModuleProperties.getModules();
+        if (CollUtil.isEmpty(modules)) {
+            log.warn("未配置MQ");
+            return;
+        }
+        for (ModuleProperties module : modules) {
+            try {
+                Queue queue = genQueue(module);
+                Exchange exchange = genQueueExchange(module);
+                queueBindExchange(queue, exchange, module);
+                bindProducer(module);
+                bindConsumer(queue, exchange, module);
+            } catch (Exception e) {
+                log.error("rabbitMQ 生产者消费者绑定初始化失败:", e);
+            }
+        }
+        stopWatch.stop();
+        log.info("初始化MQ配置成功耗时: {}ms", stopWatch.getTotal(TimeUnit.MILLISECONDS));
     }
 
     /**
@@ -124,7 +127,7 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
      */
     private void bindProducer(ModuleProperties module) {
         try {
-            AbsProducerService producerService = SpringUtil.getBean(module.getProducer());
+            AbsProducerService<?> producerService = SpringUtil.getBean(module.getProducer());
             producerService.setExchange(module.getExchange().getName());
             producerService.setRoutingKey(module.getRoutingKey());
             log.debug("绑定生产者: {}", module.getProducer());
@@ -272,16 +275,4 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
         return new Queue(queue.getName(), queue.isDurable(), queue.isExclusive(), queue.isAutoDelete(), arguments);
     }
 
-    /**
-     * 创建连接工厂，并启用发布确认
-     * @return
-     */
-    @Bean
-    @Primary
-    public ConnectionFactory connectionFactory() {
-        CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-        connectionFactory.setPublisherConfirmType(CachingConnectionFactory.ConfirmType.CORRELATED); // 启用发布确认
-        connectionFactory.setPublisherReturns(true); // 启用返回确认模式
-        return connectionFactory;
-    }
 }
