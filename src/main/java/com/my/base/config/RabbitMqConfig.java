@@ -12,7 +12,7 @@ import com.alibaba.nacos.api.exception.NacosException;
 import com.my.base.common.rabbitmq.comsumer.ConsumerContainerFactory;
 import com.my.base.common.rabbitmq.constants.RabbitEnum;
 import com.my.base.common.rabbitmq.constants.RabbitExchangeTypeEnum;
-import com.my.base.common.rabbitmq.product.AbsProducerService;
+import com.my.base.common.rabbitmq.producer.AbsProducerService;
 import com.my.base.common.rabbitmq.retry.CustomRetryListener;
 import com.my.base.config.property.ModuleProperties;
 import com.my.base.config.property.RabbitModuleProperties;
@@ -23,7 +23,9 @@ import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 
 import java.util.HashMap;
 import java.util.List;
@@ -126,6 +128,9 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
      */
     private void bindProducer(ModuleProperties module) {
         try {
+            if (StrUtil.isBlank(module.getProducer())) {
+                return;
+            }
             AbsProducerService<?> producerService = SpringUtil.getBean(module.getProducer());
             producerService.setExchange(module.getExchange().getName());
             producerService.setRoutingKey(module.getRoutingKey());

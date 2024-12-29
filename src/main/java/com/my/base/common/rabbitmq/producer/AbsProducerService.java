@@ -1,7 +1,8 @@
-package com.my.base.common.rabbitmq.product;
+package com.my.base.common.rabbitmq.producer;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
+import jakarta.annotation.Resource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -33,18 +34,19 @@ public abstract class AbsProducerService<T> implements ProducerService<T> {
      */
     private String routingKey;
 
-    public abstract void send();
 
-    public void sendMsg(T msg) {
-        sendMsg(msg, null,null);
+    public abstract void send(T msg);
+
+    public void sendQueue(T msg) {
+        sendQueue(msg, null,null);
+    };
+
+    public void sendQueue(T msg,RabbitTemplate.ConfirmCallback callback) {
+        sendQueue(msg, callback,null);
     }
 
-    public void sendMsg(T msg,RabbitTemplate.ConfirmCallback callback) {
-        sendMsg(msg, callback,null);
-    }
-
-    public void sendMsg(T msg,RabbitTemplate.ReturnsCallback returns) {
-        sendMsg(msg, null,returns);
+    public void sendQueue(T msg,RabbitTemplate.ReturnsCallback returns) {
+        sendQueue(msg, null,returns);
     }
 
     /**
@@ -54,7 +56,7 @@ public abstract class AbsProducerService<T> implements ProducerService<T> {
      * @param callback 发送消息的确认回调，用于接收消息发送确认信息
      * @param returns  发送消息的返回回调，用于接收消息发送返回信息
      */
-    public void sendMsg(T msg, RabbitTemplate.ConfirmCallback callback, RabbitTemplate.ReturnsCallback returns) {
+    public void sendQueue(T msg, RabbitTemplate.ConfirmCallback callback, RabbitTemplate.ReturnsCallback returns) {
         // 创建一个消息后处理器，用于在消息发送前设置一些额外的属性
         MessagePostProcessor messagePostProcessor = (message) -> {
             // 获取消息的属性对象
