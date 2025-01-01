@@ -57,11 +57,11 @@ spring:
         autoAck: false
         queue:
           name: test
-#          dead-letter-exchange: dead
-#          dead-letter-routing-key: dead
-#          arguments:
-#            # 1分钟(测试)，单位毫秒
-#            x-message-ttl: 3000
+          dead-letter-exchange: dead
+          dead-letter-routing-key: dead
+          arguments:
+            # 1分钟(测试)，单位毫秒
+            x-message-ttl: 3000
         exchange:
           name: test
 

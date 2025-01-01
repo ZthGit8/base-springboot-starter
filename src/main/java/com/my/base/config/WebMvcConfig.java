@@ -17,10 +17,11 @@ import java.util.List;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-         @Override
-     public void addInterceptors(InterceptorRegistry registry) {
-         registry.addInterceptor(new WebRequestInterceptor()).addPathPatterns("/**").excludePathPatterns("/swagger-ui/**");
-     }
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new WebRequestInterceptor()).addPathPatterns("/**").excludePathPatterns("/swagger-ui/**");
+    }
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
@@ -38,7 +39,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
         };
     }
 
-
+    /**
+     * 添加 MappingJackson2HttpMessageConverter 转换器，到 converters 列表最后
+     * @param converters initially an empty list of converters
+     */
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.removeAll(converters.stream().filter(converter -> converter instanceof MappingJackson2HttpMessageConverter).toList());
