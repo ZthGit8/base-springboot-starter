@@ -14,12 +14,12 @@ import java.util.stream.Collectors;
 /**
  * 封装CompletableFuture的工具类
  */
-public class CompletableFutureUtils {
+public class CompletableFutureUtil {
 
     private static ThreadPoolExecutor commonThreadPoolExecutor;
 
     static {
-        CompletableFutureUtils.commonThreadPoolExecutor = SpringUtil.getBean(ThreadPoolExecutor.class);
+        CompletableFutureUtil.commonThreadPoolExecutor = SpringUtil.getBean(ThreadPoolExecutor.class);
     }
 
     /**

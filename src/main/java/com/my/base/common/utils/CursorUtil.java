@@ -19,14 +19,14 @@ import java.util.stream.Collectors;
  * Author: <a href="https://github.com/zongzibinbin">abin</a>
  * Date: 2023-03-28
  */
-public class CursorUtils {
+public class CursorUtil {
 
     public static <T> CursorPageBaseResp<Pair<T, Double>> getCursorPageByRedis(CursorPageBaseReq cursorPageBaseReq, String redisKey, Function<String, T> typeConvert) {
         Set<ZSetOperations.TypedTuple<String>> typedTuples;
         if (StrUtil.isBlank(cursorPageBaseReq.getCursor())) {//第一次
-            typedTuples = RedisUtils.zReverseRangeWithScores(redisKey, cursorPageBaseReq.getPageSize());
+            typedTuples = RedisUtil.zReverseRangeWithScores(redisKey, cursorPageBaseReq.getPageSize());
         } else {
-            typedTuples = RedisUtils.zReverseRangeByScoreWithScores(redisKey, Double.parseDouble(cursorPageBaseReq.getCursor()), cursorPageBaseReq.getPageSize());
+            typedTuples = RedisUtil.zReverseRangeByScoreWithScores(redisKey, Double.parseDouble(cursorPageBaseReq.getCursor()), cursorPageBaseReq.getPageSize());
         }
         List<Pair<T, Double>> result = typedTuples
                 .stream()

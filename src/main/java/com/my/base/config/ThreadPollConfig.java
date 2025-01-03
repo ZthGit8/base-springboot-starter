@@ -1,10 +1,15 @@
 package com.my.base.config;
 
+import com.my.base.common.interceptor.context.RequestContext;
+import com.my.base.common.interceptor.domain.RequestInfo;
 import com.my.base.config.property.BaseProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskDecorator;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -15,14 +20,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 @EnableAsync
+@ConditionalOnBean(BaseProperties.class)
 public class ThreadPollConfig implements AsyncConfigurer {
     @Autowired
     private BaseProperties baseProperties;
-
-    private static final int CORE_POOL_SIZE = 5;
-    private static final int MAX_POOL_SIZE = 5;
-    private static final int KEEP_ALIVE_SECONDS = 10;
-    private static final int QUEUE_CAPACITY = 100;
 
     @Override
     public Executor getAsyncExecutor() {
@@ -32,17 +33,21 @@ public class ThreadPollConfig implements AsyncConfigurer {
     @Bean(name = "commonThreadPoolExecutor")
     public ThreadPoolExecutor getThreadPoolExecutor() {
         ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-        threadPoolTaskExecutor.setCorePoolSize(CORE_POOL_SIZE);
-        threadPoolTaskExecutor.setMaxPoolSize(MAX_POOL_SIZE);
-        threadPoolTaskExecutor.setKeepAliveSeconds(KEEP_ALIVE_SECONDS);
-        threadPoolTaskExecutor.setQueueCapacity(QUEUE_CAPACITY);
+        threadPoolTaskExecutor.setCorePoolSize(baseProperties.getCorePoolSize());
+        threadPoolTaskExecutor.setMaxPoolSize(baseProperties.getMaxPoolSize());
+        threadPoolTaskExecutor.setKeepAliveSeconds(baseProperties.getKeepAliveSeconds());
+        threadPoolTaskExecutor.setQueueCapacity(baseProperties.getQueueCapacity());
         threadPoolTaskExecutor.setThreadNamePrefix(baseProperties.getThreadPrefix());
         threadPoolTaskExecutor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         threadPoolTaskExecutor.setThreadFactory(new CustomizedThreadFactory(threadPoolTaskExecutor));
+        threadPoolTaskExecutor.setTaskDecorator(new ContextTaskDecorator());
         threadPoolTaskExecutor.initialize();
         return threadPoolTaskExecutor.getThreadPoolExecutor();
     }
 
+    /**
+     * 自定义线程工厂，捕获子线程异常
+     */
     static class CustomizedThreadFactory implements ThreadFactory {
         private final ThreadFactory factory;
 
@@ -58,6 +63,10 @@ public class ThreadPollConfig implements AsyncConfigurer {
             return thread;
         }
     }
+
+    /**
+     * 子线程异常捕获
+     */
     @Slf4j
     static class GlobalUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
         private static final GlobalUncaughtExceptionHandler globalUncaughtExceptionHandler = new GlobalUncaughtExceptionHandler();
@@ -70,6 +79,24 @@ public class ThreadPollConfig implements AsyncConfigurer {
         private static GlobalUncaughtExceptionHandler getInstance() {
 
             return globalUncaughtExceptionHandler;
+        }
+    }
+
+    /**
+     * 线程池装饰器，将线程池中线程的requestInfo信息传递到子线程中
+     */
+    public static class ContextTaskDecorator implements TaskDecorator {
+        @Override
+        public Runnable decorate(Runnable runnable) {
+            RequestInfo requestInfo = RequestContext.getRequestInfo();
+            return () -> {
+                try {
+                    RequestContext.setRequestInfo(requestInfo);
+                    runnable.run();
+                } finally {
+                    RequestContext.remove();
+                }
+            };
         }
     }
 }

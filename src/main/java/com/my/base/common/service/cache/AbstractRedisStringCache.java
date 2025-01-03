@@ -1,7 +1,7 @@
 package com.my.base.common.service.cache;
 
 import cn.hutool.core.collection.CollectionUtil;
-import com.my.base.common.utils.RedisUtils;
+import com.my.base.common.utils.RedisUtil;
 import org.springframework.data.util.Pair;
 
 import java.lang.reflect.*;
@@ -44,7 +44,7 @@ public abstract class AbstractRedisStringCache<IN, OUT> implements BatchCache<IN
         //组装key
         List<String> keys = req.stream().map(this::getKey).collect(Collectors.toList());
         //批量get
-        List<OUT> valueList = RedisUtils.mget(keys, outClass);
+        List<OUT> valueList = RedisUtil.mget(keys, outClass);
         //差集计算
         List<IN> loadReqs = new ArrayList<>();
         for (int i = 0; i < valueList.size(); i++) {
@@ -60,7 +60,7 @@ public abstract class AbstractRedisStringCache<IN, OUT> implements BatchCache<IN
             Map<String, OUT> loadMap = load.entrySet().stream()
                     .map(a -> Pair.of(getKey(a.getKey()), a.getValue()))
                     .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
-            RedisUtils.mset(loadMap, getExpireSeconds());
+            RedisUtil.mset(loadMap, getExpireSeconds());
         }
 
         //组装最后的结果
@@ -82,7 +82,7 @@ public abstract class AbstractRedisStringCache<IN, OUT> implements BatchCache<IN
     @Override
     public void deleteBatch(List<IN> req) {
         List<String> keys = req.stream().map(this::getKey).collect(Collectors.toList());
-        RedisUtils.del(keys);
+        RedisUtil.del(keys);
     }
 
 }

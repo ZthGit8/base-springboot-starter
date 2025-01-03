@@ -12,7 +12,7 @@ import java.util.List;
  * Author: <a href="https://github.com/zongzibinbin">abin</a>
  * Date: 2023-04-25
  */
-public class JsonUtils {
+public class JsonUtil {
     private static final ObjectMapper jsonMapper = new ObjectMapper();
 
     public static <T> T toObj(String str, Class<T> clz) {

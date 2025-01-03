@@ -83,6 +83,7 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
                 public void receiveConfigInfo(String configInfo) {
                     register();
                 }
+
                 @Override
                 public Executor getExecutor() {
                     return null;

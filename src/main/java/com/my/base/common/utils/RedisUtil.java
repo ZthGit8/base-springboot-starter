@@ -17,12 +17,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class RedisUtils {
+public class RedisUtil {
 
     private static StringRedisTemplate stringRedisTemplate;
 
     static {
-        RedisUtils.stringRedisTemplate = SpringUtil.getBean(StringRedisTemplate.class);
+        RedisUtil.stringRedisTemplate = SpringUtil.getBean(StringRedisTemplate.class);
     }
 
     private static final String LUA_INCR_EXPIRE =
@@ -271,11 +271,11 @@ public class RedisUtils {
     }
 
     static <T> T toBeanOrNull(String json, Class<T> tClass) {
-        return json == null ? null : JsonUtils.toObj(json, tClass);
+        return json == null ? null : JsonUtil.toObj(json, tClass);
     }
 
     public static String objToStr(Object o) {
-        return JsonUtils.toStr(o);
+        return JsonUtil.toStr(o);
     }
 
     public static <T> void mset(Map<String, T> map, long time) {

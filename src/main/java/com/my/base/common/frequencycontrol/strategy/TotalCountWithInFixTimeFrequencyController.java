@@ -4,7 +4,7 @@ package com.my.base.common.frequencycontrol.strategy;
 
 import com.my.base.common.service.frequencycontrol.AbstractFrequencyControlService;
 import com.my.base.common.frequencycontrol.domain.FixedWindowDTO;
-import com.my.base.common.utils.RedisUtils;
+import com.my.base.common.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +32,7 @@ public class TotalCountWithInFixTimeFrequencyController extends AbstractFrequenc
     public boolean reachRateLimit(Map<String, FixedWindowDTO> frequencyControlMap) {
         //批量获取redis统计的值
         List<String> frequencyKeys = new ArrayList<>(frequencyControlMap.keySet());
-        List<Integer> countList = RedisUtils.mget(frequencyKeys, Integer.class);
+        List<Integer> countList = RedisUtil.mget(frequencyKeys, Integer.class);
         for (int i = 0; i < frequencyKeys.size(); i++) {
             String key = frequencyKeys.get(i);
             Integer count = countList.get(i);
@@ -53,7 +53,7 @@ public class TotalCountWithInFixTimeFrequencyController extends AbstractFrequenc
      */
     @Override
     public void addFrequencyControlStatisticsCount(Map<String, FixedWindowDTO> frequencyControlMap) {
-        frequencyControlMap.forEach((k, v) -> RedisUtils.inc(k, v.getTime(), v.getUnit()));
+        frequencyControlMap.forEach((k, v) -> RedisUtil.inc(k, v.getTime(), v.getUnit()));
     }
 
     @Override

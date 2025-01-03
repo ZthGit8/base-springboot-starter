@@ -3,7 +3,7 @@ package com.my.base.common.utils;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
-public class ExceptionUtils {
+public class ExceptionUtil {
    /**
     * 提取真正的异常
     */
