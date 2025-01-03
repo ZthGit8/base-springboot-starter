@@ -1,7 +1,7 @@
 package com.my.base.common.future;
 
 import com.my.base.common.exception.BaseException;
-import com.my.base.common.utils.ExceptionUtils;
+import com.my.base.common.utils.ExceptionUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -21,7 +21,7 @@ public abstract class AbstractLogAction<R> {
             if (isBusinessError) {
                 logBusinessError(throwable);
             } else {
-                log.error("{} unknown error, param:{} , error:{}", methodName, args, ExceptionUtils.extractRealException(throwable));
+                log.error("{} unknown error, param:{} , error:{}", methodName, args, ExceptionUtil.extractRealException(throwable));
             }
         } else {
 
@@ -31,7 +31,7 @@ public abstract class AbstractLogAction<R> {
     }
 
     private void logBusinessError(Throwable throwable) {
-        log.error("{} business error, param:{} , error:{}", methodName, args, throwable.toString(), ExceptionUtils.extractRealException(throwable));
+        log.error("{} business error, param:{} , error:{}", methodName, args, throwable.toString(), ExceptionUtil.extractRealException(throwable));
     }
 
 

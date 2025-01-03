@@ -3,7 +3,7 @@ package com.my.base.common.aspect;
 import cn.hutool.core.util.StrUtil;
 import com.my.base.common.annotation.DistributionLock;
 import com.my.base.common.service.lock.LockService;
-import com.my.base.common.utils.SpElUtils;
+import com.my.base.common.utils.SpElUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -44,8 +44,8 @@ public class DistributionLockAspect {
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         DistributionLock distributionLock = method.getAnnotation(DistributionLock.class);
-        String prefix = StrUtil.isBlank(distributionLock.prefixKey()) ? SpElUtils.getMethodKey(method) : distributionLock.prefixKey();//默认方法限定名+注解排名（可能多个）
-        String key = SpElUtils.parseSpEl(method, joinPoint.getArgs(), distributionLock.key());
+        String prefix = StrUtil.isBlank(distributionLock.prefixKey()) ? SpElUtil.getMethodKey(method) : distributionLock.prefixKey();//默认方法限定名+注解排名（可能多个）
+        String key = SpElUtil.parseSpEl(method, joinPoint.getArgs(), distributionLock.key());
 
         LockService lockService = lockServiceMap.get(distributionLock.useLockType());
 

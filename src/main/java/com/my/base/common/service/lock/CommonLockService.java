@@ -1,18 +1,11 @@
 package com.my.base.common.service.lock;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.my.base.common.enums.LockType;
 import com.my.base.common.exception.BusinessException;
 import com.my.base.common.result.ResultCode;
-import com.my.base.common.utils.RedisUtils;
+import com.my.base.common.utils.RedisUtil;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.util.StringUtil;
-import org.apache.tomcat.util.buf.StringUtils;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
@@ -56,7 +49,7 @@ public class CommonLockService implements LockService {
      * @return
      */
     private boolean tryGetLock(String key, int waitTime, TimeUnit unit) {
-        return Boolean.TRUE.equals(RedisUtils.setIfAbsent(key, "1", waitTime, unit));
+        return Boolean.TRUE.equals(RedisUtil.setIfAbsent(key, "1", waitTime, unit));
     }
 
     /**
@@ -65,7 +58,7 @@ public class CommonLockService implements LockService {
      * @return
      */
     private boolean releaseLock(String key) {
-        return RedisUtils.releaseLock(key);
+        return RedisUtil.releaseLock(key);
     }
 
 

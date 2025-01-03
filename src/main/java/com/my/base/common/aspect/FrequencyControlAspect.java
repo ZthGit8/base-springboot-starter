@@ -11,7 +11,7 @@ import com.my.base.common.frequencycontrol.domain.SlidingWindowDTO;
 import com.my.base.common.frequencycontrol.domain.TokenBucketDTO;
 import com.my.base.common.frequencycontrol.domain.FrequencyControlDTO;
 import com.my.base.common.interceptor.context.RequestContext;
-import com.my.base.common.utils.SpElUtils;
+import com.my.base.common.utils.SpElUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -52,7 +52,7 @@ public class FrequencyControlAspect {
             String key = "";
             switch (frequencyControl.target()) {
                 case EL:
-                    key = SpElUtils.parseSpEl(method, joinPoint.getArgs(), frequencyControl.spEl());
+                    key = SpElUtil.parseSpEl(method, joinPoint.getArgs(), frequencyControl.spEl());
                     break;
                 case IP:
                     key = RequestContext.getRequestInfo().getRequestIp();

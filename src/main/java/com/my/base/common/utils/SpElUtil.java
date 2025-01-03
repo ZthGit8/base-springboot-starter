@@ -10,7 +10,7 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
-public class SpElUtils {
+public class SpElUtil {
     private static final ExpressionParser parser = new SpelExpressionParser();
     private static final DefaultParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 

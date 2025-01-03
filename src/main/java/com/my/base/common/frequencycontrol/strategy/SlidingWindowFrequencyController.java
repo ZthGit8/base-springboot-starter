@@ -3,7 +3,7 @@ package com.my.base.common.frequencycontrol.strategy;
 
 import com.my.base.common.service.frequencycontrol.AbstractFrequencyControlService;
 import com.my.base.common.frequencycontrol.domain.SlidingWindowDTO;
-import com.my.base.common.utils.RedisUtils;
+import com.my.base.common.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +28,7 @@ public class SlidingWindowFrequencyController extends AbstractFrequencyControlSe
             String key = frequencyKeys.get(i);
             SlidingWindowDTO controlDTO = frequencyControlMap.get(key);
             // 获取窗口时间内计数
-            Long count = RedisUtils.ZSetGet(key);
+            Long count = RedisUtil.ZSetGet(key);
             int frequencyControlCount = controlDTO.getCount();
             if (Objects.nonNull(count) && count >= frequencyControlCount) {
                 //频率超过了
@@ -52,7 +52,7 @@ public class SlidingWindowFrequencyController extends AbstractFrequencyControlSe
             long length = period * controlDTO.getWindowSize();
             long start = current - length;
 //            long expireTime = length + period;
-            RedisUtils.ZSetAddAndExpire(key, start, length, current);
+            RedisUtil.ZSetAddAndExpire(key, start, length, current);
         }
     }
 
