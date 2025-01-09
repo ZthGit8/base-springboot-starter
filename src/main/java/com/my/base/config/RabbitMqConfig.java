@@ -90,7 +90,7 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
                 }
             });
             // 启动时加载配置
-            register();
+            // register();
         } catch (NacosException e) {
             log.error("初始化MQ配置失败 {}", e.getMessage());
             throw new RuntimeException(e);

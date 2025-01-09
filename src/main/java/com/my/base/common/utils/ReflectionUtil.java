@@ -4,6 +4,8 @@ package com.my.base.common.utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 public class ReflectionUtil {
@@ -39,6 +41,21 @@ public class ReflectionUtil {
         }
 
         return result;
+    }
+
+    /**
+     * 获取类的所有属性名
+     *
+     * @param clazz 类对象
+     * @return 属性名列表
+     */
+    public static List<String> getFieldNames(Class<?> clazz) {
+        List<String> fieldNames = new ArrayList<>();
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            fieldNames.add(field.getName());
+        }
+        return fieldNames;
     }
 
     /**

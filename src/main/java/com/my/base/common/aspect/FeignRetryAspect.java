@@ -1,8 +1,7 @@
 package com.my.base.common.aspect;
 
 import com.my.base.common.annotation.FeignRetry;
-import com.my.base.common.interceptor.context.RequestContext;
-import com.my.base.common.interceptor.domain.RequestInfo;
+import com.my.base.common.context.RequestContext;
 import feign.RetryableException;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -10,7 +9,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.retry.backoff.BackOffPolicy;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.backoff.FixedBackOffPolicy;

@@ -21,7 +21,7 @@ public abstract class AbstractLogAction<R> {
             if (isBusinessError) {
                 logBusinessError(throwable);
             } else {
-                log.error("{} unknown error, param:{} , error:{}", methodName, args, ExceptionUtil.extractRealException(throwable));
+                log.error("{} unknown error, param:{}", methodName, args,ExceptionUtil.extractRealException(throwable));
             }
         } else {
 

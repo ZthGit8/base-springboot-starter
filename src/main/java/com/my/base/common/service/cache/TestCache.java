@@ -1,6 +1,6 @@
 package com.my.base.common.service.cache;
 
-import com.my.base.common.interceptor.context.RequestContext;
+import com.my.base.common.context.RequestContext;
 import com.my.base.common.interceptor.domain.RequestInfo;
 import org.springframework.stereotype.Component;
 

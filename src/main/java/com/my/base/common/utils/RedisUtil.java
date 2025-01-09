@@ -1,13 +1,11 @@
 package com.my.base.common.utils;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.RedisConnectionUtils;
-import org.springframework.data.redis.core.ScanOptions;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
@@ -21,8 +19,11 @@ public class RedisUtil {
 
     private static StringRedisTemplate stringRedisTemplate;
 
+    private static RedisTemplate<String,Object> redisTemplate;
+
     static {
         RedisUtil.stringRedisTemplate = SpringUtil.getBean(StringRedisTemplate.class);
+        RedisUtil.redisTemplate = (RedisTemplate<String,Object>) SpringUtil.getBean(RedisTemplate.class);
     }
 
     private static final String LUA_INCR_EXPIRE =
@@ -34,28 +35,116 @@ public class RedisUtil {
                     "else \n" +
                     "  return tonumber(redis.call('INCR',key)) \n" +
                     "end ";
+
+    /**
+     * 释放分布式锁
+     * @param lockKey
+     * @return
+     */
     public static boolean releaseLock(String lockKey) {
         String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
         RedisScript<Long> redisScript = new DefaultRedisScript<>(script, Long.class);
         Long result = stringRedisTemplate.execute(redisScript, Collections.singletonList(lockKey), "1");
-        return result==1L;
+        return result == 1L;
     }
 
+    /**
+     * 自增并设置过期时间
+     * @param key
+     * @param time
+     * @param unit
+     * @return
+     */
     public static Long inc(String key, int time, TimeUnit unit) {
         RedisScript<Long> redisScript = new DefaultRedisScript<>(LUA_INCR_EXPIRE, Long.class);
         return stringRedisTemplate.execute(redisScript, Collections.singletonList(key), String.valueOf(unit.toSeconds(time)));
     }
 
-    public static Long ZSetGet(String key) {
-        return stringRedisTemplate.opsForZSet().zCard(key);
+    /**
+     * 保存 bean 到 redis hashset结构
+     * @param key
+     * @param bean
+     * @param expireTime
+     * @return
+     */
+    public static boolean saveBean(String key, Object bean, long expireTime, TimeUnit timeUnit) {
+        if (bean == null) {
+            return false;
+        }
+        // 把 bean 转为 map
+        Map<String, Object> map = BeanUtil.beanToMap(bean,false,true);
+        redisTemplate.opsForHash().putAll(key,map);
+
+        if (expireTime > 0) {
+            expire(key, expireTime, timeUnit);
+        }
+        return true;
     }
 
+    /**
+     * 保存 bean 到 redis hashset结构
+     * @param key
+     * @param bean
+     * @param expireTime
+     * @return
+     */
+    public static boolean saveBean(String key, Object bean, long expireTime) {
+        if (bean == null) {
+            return false;
+        }
+        // 把 bean 转为 map
+        Map<String, Object> map = BeanUtil.beanToMap(bean,false,true);
+        redisTemplate.opsForHash().putAll(key,map);
+
+        if (expireTime > 0) {
+            expire(key, expireTime);
+        }
+        return true;
+    }
+
+    /**
+     * 从 redis hashset结构中获取 bean
+     * @param key
+     * @param clazz
+     * @return
+     */
+    public static Object getBean(String key, Class<?> clazz) {
+        Map<Object, Object> entries = redisTemplate.opsForHash().entries(key);
+        return BeanUtil.toBean(entries, clazz);
+    }
+
+    /**
+     * 从 redis hashset结构中获取 bean 的某个字段
+     * @param key
+     * @param field
+     * @return
+     */
+    public static Object getBeanValue(String key, String field) {
+        return redisTemplate.opsForHash().get(key, field);
+    }
+
+    /**
+     * 滑动窗口处理数据
+     * @param key
+     * @param startTime
+     * @param expireTime
+     * @param currentTime
+     */
     public static void ZSetAddAndExpire(String key, long startTime, long expireTime, long currentTime) {
         stringRedisTemplate.opsForZSet().add(key, String.valueOf(currentTime), currentTime);
         // 删除周期之前的数据
         stringRedisTemplate.opsForZSet().removeRangeByScore(key, 0, startTime);
         // 过期时间窗口长度+时间间隔
         stringRedisTemplate.expire(key, expireTime, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * zSet 获取数据
+     * @param key
+     * @return
+     */
+    public static Long ZSetGet(String key) {
+        return stringRedisTemplate.opsForZSet().zCard(key);
     }
 
     /**
@@ -1130,8 +1219,8 @@ public class RedisUtil {
                 destKey);
     }
 
-    public static boolean setIfAbsent(String key, Object value, long time,TimeUnit timeUnit) {
-        return stringRedisTemplate.opsForValue().setIfAbsent(key, objToStr(value), time, timeUnit);
+    public static boolean setIfAbsent(String key, Object value, long time, TimeUnit timeUnit) {
+        return Boolean.TRUE.equals(stringRedisTemplate.opsForValue().setIfAbsent(key, objToStr(value), time, timeUnit));
     }
 
 }

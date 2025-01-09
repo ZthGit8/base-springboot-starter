@@ -1,7 +1,6 @@
 package com.my.base.common.aspect;
 
 
-
 import cn.hutool.core.util.StrUtil;
 import com.my.base.common.annotation.FrequencyControl;
 import com.my.base.common.frequencycontrol.strategy.FrequencyControlConstant;
@@ -10,7 +9,7 @@ import com.my.base.common.frequencycontrol.domain.FixedWindowDTO;
 import com.my.base.common.frequencycontrol.domain.SlidingWindowDTO;
 import com.my.base.common.frequencycontrol.domain.TokenBucketDTO;
 import com.my.base.common.frequencycontrol.domain.FrequencyControlDTO;
-import com.my.base.common.interceptor.context.RequestContext;
+import com.my.base.common.context.RequestContext;
 import com.my.base.common.utils.SpElUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -33,13 +32,13 @@ import java.util.stream.Collectors;
 @Component
 public class FrequencyControlAspect {
 
-    private static String TOTAL_COUNT_WITH_IN_FIX_TIME = FrequencyControlConstant.TOTAL_COUNT_WITH_IN_FIX_TIME;
+    private static final String TOTAL_COUNT_WITH_IN_FIX_TIME = FrequencyControlConstant.TOTAL_COUNT_WITH_IN_FIX_TIME;
 
-    private static String SLIDING_WINDOW = FrequencyControlConstant.SLIDING_WINDOW;
+    private static final String SLIDING_WINDOW = FrequencyControlConstant.SLIDING_WINDOW;
 
-    private static String TOKEN_BUCKET = FrequencyControlConstant.TOKEN_BUCKET;
+    private static final String TOKEN_BUCKET = FrequencyControlConstant.TOKEN_BUCKET;
 
-    @Around("@annotation(com.my.base.common.annotation.FrequencyControl)||@annotation(com.my.base.common.annotation.FrequencyControlContainer)")
+    @Around("@annotation(com.my.base.common.annotation.FrequencyControl) || @annotation(com.my.base.common.annotation.FrequencyControlContainer)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         FrequencyControl[] annotationsByType = method.getAnnotationsByType(FrequencyControl.class);

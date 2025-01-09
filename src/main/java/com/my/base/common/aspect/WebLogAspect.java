@@ -9,7 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import com.my.base.common.interceptor.context.RequestContext;
+import com.my.base.common.context.RequestContext;
 import com.my.base.common.interceptor.domain.RequestInfo;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

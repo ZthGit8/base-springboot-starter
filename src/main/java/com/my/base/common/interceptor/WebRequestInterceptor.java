@@ -2,7 +2,7 @@ package com.my.base.common.interceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import com.my.base.common.interceptor.context.RequestContext;
+import com.my.base.common.context.RequestContext;
 import com.my.base.common.interceptor.domain.RequestInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.annotation.Order;
