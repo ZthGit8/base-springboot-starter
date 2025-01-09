@@ -2,7 +2,7 @@ package com.my.base.common.aspect;
 
 import cn.hutool.json.JSONUtil;
 import com.my.base.common.annotation.OtaApi;
-import com.my.base.common.interceptor.context.RequestContext;
+import com.my.base.common.context.RequestContext;
 import com.my.base.common.interceptor.domain.RequestInfo;
 import com.my.base.common.result.Result;
 import com.my.base.common.utils.RedisUtil;

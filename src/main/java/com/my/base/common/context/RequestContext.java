@@ -1,4 +1,4 @@
-package com.my.base.common.interceptor.context;
+package com.my.base.common.context;
 
 import com.my.base.common.interceptor.domain.RequestInfo;
 
