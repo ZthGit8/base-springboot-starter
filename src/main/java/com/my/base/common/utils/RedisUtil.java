@@ -14,6 +14,9 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+/**
+ * Redis工具类
+ */
 @Slf4j
 public class RedisUtil {
 
@@ -26,15 +29,21 @@ public class RedisUtil {
         RedisUtil.redisTemplate = (RedisTemplate<String,Object>) SpringUtil.getBean(RedisTemplate.class);
     }
 
+    /**
+     *
+     */
     private static final String LUA_INCR_EXPIRE =
-            "local key,ttl=KEYS[1],ARGV[1] \n" +
-                    " \n" +
-                    "if redis.call('EXISTS',key)==0 then   \n" +
-                    "  redis.call('SETEX',key,ttl,1) \n" +
-                    "  return 1 \n" +
-                    "else \n" +
-                    "  return tonumber(redis.call('INCR',key)) \n" +
-                    "end ";
+            "local key = KEYS[1]\n" +
+                    "local ttl = tonumber(ARGV[1])\n" +
+                    "\n" +
+                    "if ttl == nil then\n" +
+                    "end\n" +
+                    "if redis.call('EXISTS', key) == 0 then\n" +
+                    "  redis.call('SETEX', key, ttl, 1)\n" +
+                    "  return 1\n" +
+                    "else\n" +
+                    "  return redis.call('INCR', key)\n" +
+                    "end";
 
     /**
      * 释放分布式锁
@@ -49,7 +58,7 @@ public class RedisUtil {
     }
 
     /**
-     * 自增并设置过期时间
+     * 固定窗口限流原子增加访问次数
      * @param key
      * @param time
      * @param unit
