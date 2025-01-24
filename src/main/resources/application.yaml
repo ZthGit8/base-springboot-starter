@@ -82,6 +82,11 @@ spring:
     virtual-host: /
     ssl:
       enabled: false
+  # 国际化配置
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+
 springdoc:
   api-docs:
     path: /v3/api-docs

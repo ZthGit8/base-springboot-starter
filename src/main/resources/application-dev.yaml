@@ -82,6 +82,10 @@ spring:
     virtual-host: /
     ssl:
       enabled: false
+  # 国际化配置
+#  messages:
+#    basename: i18n/messages
+#    encoding: UTF-8
 
 springdoc:
   # 配置Swagger UI的访问路径和排序方式

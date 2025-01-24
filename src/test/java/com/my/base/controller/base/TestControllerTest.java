@@ -1,8 +1,11 @@
 package com.my.base.controller.base;
 
 import com.my.base.common.interceptor.domain.RequestInfo;
+import com.my.base.common.utils.I18nMessageUtil;
 import com.my.base.common.utils.RedisUtil;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -29,5 +32,11 @@ class TestControllerTest {
         RedisUtil.saveBean("test", requestInfo, 10, TimeUnit.MINUTES);
         RequestInfo requestInfo1 = (RequestInfo) RedisUtil.getBean("test", RequestInfo.class);
         System.out.println(requestInfo1);
+    }
+
+    @Test
+    void test02() {
+        System.out.println(I18nMessageUtil.get("add.success"));
+
     }
 }

@@ -1,17 +1,20 @@
 package com.my.base.common.utils;
 
 
+import cn.hutool.core.util.ReflectUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.PropertyAccessorFactory;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
-public class ReflectionUtil {
-
-    public ReflectionUtil() {
-    }
+public class ReflectionUtil extends ReflectUtil {
 
     private static String getExceptionMessage(String fieldName, Object object) {
         return "Could not find field [" + fieldName + "] on target [" + object + "]";
@@ -183,6 +186,37 @@ public class ReflectionUtil {
             return method.invoke(object, parameters);
         } catch (Exception e) {
             log.error("invokeMethod:", e);
+        }
+        return null;
+    }
+
+    /**
+     * @description 给定对象和属性名, 设置属性值 （在原有的实例设置属性值）
+     * @param object 已拥有的对象
+     * @param map 属性名值对
+     */
+    public static void setFieldValues(Object object,Map<String, Object> map) {
+        try {
+            BeanWrapper beanWrapper = PropertyAccessorFactory.forBeanPropertyAccess(object);
+            beanWrapper.setPropertyValues(map);
+        } catch (BeansException e) {
+            log.error("setFieldValues:", e);
+        }
+    }
+
+    /**
+     * @description 给定对象和属性名, 设置属性值 （新生成一个实例）
+     * @param clazz 对象的类
+     * @param map 属性名值对
+     * @return 反射生成的对象
+     */
+    public static Object setFieldValues(Class<?> clazz,Map<String, Object> map) {
+        try {
+            BeanWrapperImpl beanWrapper = new BeanWrapperImpl(clazz);
+            beanWrapper.setPropertyValues(map);
+            return beanWrapper.getWrappedInstance();
+        } catch (BeansException e) {
+            log.error("setFieldValues:", e);
         }
         return null;
     }
