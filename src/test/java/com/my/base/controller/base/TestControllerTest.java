@@ -3,12 +3,20 @@ package com.my.base.controller.base;
 import com.my.base.common.interceptor.domain.RequestInfo;
 import com.my.base.common.utils.I18nMessageUtil;
 import com.my.base.common.utils.RedisUtil;
+import com.my.base.config.MybatisConfig;
+import com.my.base.test.dao.UserDao;
+import com.my.base.test.domain.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,8 +28,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 
 @SpringBootTest
+@ActiveProfiles("dev")
+//@ContextConfiguration(classes = MybatisConfig.class)
 class TestControllerTest {
-
+    @Autowired
+    private UserDao userDao;
     @Test
     void test() {
         RequestInfo requestInfo = new RequestInfo();
@@ -36,7 +47,10 @@ class TestControllerTest {
 
     @Test
     void test02() {
-        System.out.println(I18nMessageUtil.get("add.success"));
+        List<User> list = userDao.query().list();
+        for (User user : list) {
+            System.out.println(user);
+        }
 
     }
 }

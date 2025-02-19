@@ -6,9 +6,11 @@ my:
     request-log-enable: true
     thread-prefix: @project.name@+"_"
     slow-sql-log-enable: false
-    sql-log-enable: false
+    sql-log-enable: true
 server:
   port: 8088
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
 spring:
   datasource:
     username: root
