@@ -1,5 +1,8 @@
 package com.my.base;
 
+import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import com.my.base.common.interceptor.MybatisPlusAllSqlLog;
 import com.my.base.common.sensitive.ACFilter;
 import com.my.base.common.sensitive.DFAFilter;
 import com.my.base.common.sensitive.SensitiveWordBs;
@@ -159,6 +162,24 @@ public class MyBaseAutoConfiguration {
         public void setLocale(@Nullable HttpServletRequest request, HttpServletResponse response, Locale locale) {
 
         }
+    }
+
+    @Bean
+    @ConditionalOnBean({MybatisPlusAllSqlLog.class})
+    public MybatisPlusInterceptor mybatisPlusInterceptor(MybatisPlusAllSqlLog mybatisPlusAllSqlLog) {
+        MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();
+        mybatisPlusInterceptor.addInnerInterceptor(mybatisPlusAllSqlLog);
+        return mybatisPlusInterceptor;
+    }
+
+    @Bean
+    public MybatisPlusInterceptor paginationInterceptor() {
+        MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();
+        PaginationInnerInterceptor paginationInnerInterceptor = new PaginationInnerInterceptor();
+        paginationInnerInterceptor.setOverflow(false);
+        paginationInnerInterceptor.setMaxLimit(1000L);
+        mybatisPlusInterceptor.addInnerInterceptor(paginationInnerInterceptor);
+        return mybatisPlusInterceptor;
     }
 
 }

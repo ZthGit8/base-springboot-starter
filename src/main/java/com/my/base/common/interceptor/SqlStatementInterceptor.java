@@ -33,7 +33,6 @@ public class SqlStatementInterceptor implements Interceptor {
 
     private final BaseProperties baseProperties;
 
-    @Autowired
     public SqlStatementInterceptor(BaseProperties baseProperties) {
         this.baseProperties = baseProperties;
     }
@@ -68,11 +67,11 @@ public class SqlStatementInterceptor implements Interceptor {
             stopWatch.stop();
             long timeConsuming = stopWatch.getTotalTimeMillis();
             // 如果执行时间大于1秒，则记录日志信息
-            if (timeConsuming > 999) {
+            if (timeConsuming > 9) {
                 log.info("执行SQL大于1s:{}ms", timeConsuming);
                 // 获取执行的sql
                 Object[] args = invocation.getArgs();
-                BoundSql boundSql = (BoundSql) args[3];
+                BoundSql boundSql = (BoundSql) args[5];
                 MappedStatement ms = (MappedStatement) args[0];
                 // 判断是否是批量操作，如果是批量操作不记录日志
                 if (ms.getId().contains("batch")) {
@@ -82,7 +81,12 @@ public class SqlStatementInterceptor implements Interceptor {
                 String sql = MybatisPlusAllSqlLog.logInfoFromStatement(boundSql, ms, isSqlException);
                 // 保存慢sql日志
                 if (baseProperties.isSlowSqlLogEnable()) {
-                    SlowSqlLogStorage slowSqlLogStorage = SpringUtil.getBean(SlowSqlLogStorage.class);
+                    SlowSqlLogStorage slowSqlLogStorage = null;
+                    try {
+                        slowSqlLogStorage = SpringUtil.getBean(SlowSqlLogStorage.class);
+                    } catch (Exception e) {
+                        throw new IllegalStateException("开启了 slowSqlLogEnable 但是没有实现 SlowSqlLogStorage 的实现类");
+                    }
                     if (slowSqlLogStorage != null) {
                         slowSqlLogStorage.save(sql, timeConsuming);
                     }
