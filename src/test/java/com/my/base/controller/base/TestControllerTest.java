@@ -47,7 +47,8 @@ class TestControllerTest {
 
     @Test
     void test02() {
-        List<User> list = userDao.query().list();
+        // 查询年龄大于18岁的用户
+        List<User> list = userDao.query().gt("age", 18).list();
         for (User user : list) {
             System.out.println(user);
         }

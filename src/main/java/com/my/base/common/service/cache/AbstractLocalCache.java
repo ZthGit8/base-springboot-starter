@@ -29,7 +29,7 @@ public abstract class AbstractLocalCache<IN, OUT> implements BatchCache<IN, OUT>
     protected AbstractLocalCache(long refreshSeconds, long expireSeconds, int maxSize) {
         init(refreshSeconds, expireSeconds, maxSize);
     }
-
+    @SuppressWarnings("unchecked")
     private void init(long refreshSeconds, long expireSeconds, int maxSize) {
         if (refreshSeconds <= 0 || expireSeconds <= 0 || maxSize <= 0) {
             throw new IllegalArgumentException("refreshSeconds, expireSeconds, and maxSize must be positive");

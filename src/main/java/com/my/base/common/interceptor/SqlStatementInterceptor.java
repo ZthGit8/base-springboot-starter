@@ -67,7 +67,7 @@ public class SqlStatementInterceptor implements Interceptor {
             stopWatch.stop();
             long timeConsuming = stopWatch.getTotalTimeMillis();
             // 如果执行时间大于1秒，则记录日志信息
-            if (timeConsuming > 9) {
+            if (timeConsuming > 999) {
                 log.info("执行SQL大于1s:{}ms", timeConsuming);
                 // 获取执行的sql
                 Object[] args = invocation.getArgs();

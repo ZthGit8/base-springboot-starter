@@ -164,22 +164,22 @@ public class MyBaseAutoConfiguration {
         }
     }
 
-    @Bean
-    @ConditionalOnBean({MybatisPlusAllSqlLog.class})
-    public MybatisPlusInterceptor mybatisPlusInterceptor(MybatisPlusAllSqlLog mybatisPlusAllSqlLog) {
-        MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();
-        mybatisPlusInterceptor.addInnerInterceptor(mybatisPlusAllSqlLog);
-        return mybatisPlusInterceptor;
-    }
-
-    @Bean
-    public MybatisPlusInterceptor paginationInterceptor() {
-        MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();
-        PaginationInnerInterceptor paginationInnerInterceptor = new PaginationInnerInterceptor();
-        paginationInnerInterceptor.setOverflow(false);
-        paginationInnerInterceptor.setMaxLimit(1000L);
-        mybatisPlusInterceptor.addInnerInterceptor(paginationInnerInterceptor);
-        return mybatisPlusInterceptor;
-    }
+//    @Bean
+//    @ConditionalOnBean({MybatisPlusAllSqlLog.class})
+//    public MybatisPlusInterceptor mybatisPlusInterceptor(MybatisPlusAllSqlLog mybatisPlusAllSqlLog) {
+//        MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();
+//        mybatisPlusInterceptor.addInnerInterceptor(mybatisPlusAllSqlLog);
+//        return mybatisPlusInterceptor;
+//    }
+//
+//    @Bean
+//    public MybatisPlusInterceptor paginationInterceptor() {
+//        MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();
+//        PaginationInnerInterceptor paginationInnerInterceptor = new PaginationInnerInterceptor();
+//        paginationInnerInterceptor.setOverflow(false);
+//        paginationInnerInterceptor.setMaxLimit(1000L);
+//        mybatisPlusInterceptor.addInnerInterceptor(paginationInnerInterceptor);
+//        return mybatisPlusInterceptor;
+//    }
 
 }

@@ -21,6 +21,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import javax.validation.ConstraintViolationException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 @Slf4j
 @RestControllerAdvice()
@@ -51,7 +52,11 @@ public class GlobalExceptionAdvice {
             log.warn(e.getMessage());
         } else if (exceptionClass.getSuperclass().equals(BaseException.class)) {
             try {
-                response.setStatus((int) ReflectionUtils.findMethod(exceptionClass, "getCode").invoke(e));
+                Method method = ReflectionUtils.findMethod(exceptionClass, "getCode");
+                if (method == null) {
+                    throw new RuntimeException("getCode method not found in " + exceptionClass.getName());
+                }
+                response.setStatus((int) method.invoke(e));
             } catch (InvocationTargetException | IllegalAccessException ex) {
                 throw new RuntimeException(ex);
             }
