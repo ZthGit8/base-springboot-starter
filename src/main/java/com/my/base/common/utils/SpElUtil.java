@@ -23,7 +23,7 @@ public class SpElUtil {
      * @throws IllegalAccessException
      */
     public static String parseSpEl(Method method, Object[] args, String spEl) throws IllegalAccessException {
-        String[] params = Optional.of(parameterNameDiscoverer.getParameterNames(method)).orElse(new String[]{});//解析参数名
+        String[] params = Optional.ofNullable(parameterNameDiscoverer.getParameterNames(method)).orElse(new String[]{});//解析参数名
         EvaluationContext context = null;//el解析需要的上下文对象
         for (int i = 0; i < params.length; i++) {
             Object arg = args[i];

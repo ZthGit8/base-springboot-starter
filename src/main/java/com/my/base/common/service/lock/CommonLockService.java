@@ -15,8 +15,10 @@ import java.util.function.Supplier;
 @Slf4j
 public class CommonLockService implements LockService {
 
+    private static final String LOCK_VALUE = "lock_value";
+
     public <T> T executeWithLockThrows(String key, int waitTime, TimeUnit unit, SupplierThrow<T> supplier) throws Throwable {
-        boolean lockSuccess = tryGetLock(key, waitTime, unit);
+        boolean lockSuccess = tryGetLock(key);
         if (!lockSuccess) {
             throw new BusinessException(ResultCode.DISABLE_OPERATION.getCode(), ResultCode.DISABLE_OPERATION.getMessage());
         }
@@ -44,12 +46,10 @@ public class CommonLockService implements LockService {
     /**
      * 尝试获取锁
      * @param key
-     * @param waitTime
-     * @param unit
      * @return
      */
-    private boolean tryGetLock(String key, int waitTime, TimeUnit unit) {
-        return Boolean.TRUE.equals(RedisUtil.setIfAbsent(key, "1", waitTime, unit));
+    private boolean tryGetLock(String key) {
+        return Boolean.TRUE.equals(RedisUtil.setIfAbsent(key, LOCK_VALUE));
     }
 
     /**
@@ -58,7 +58,7 @@ public class CommonLockService implements LockService {
      * @return
      */
     private boolean releaseLock(String key) {
-        return RedisUtil.releaseLock(key);
+        return RedisUtil.releaseLock(key, LOCK_VALUE);
     }
 
 

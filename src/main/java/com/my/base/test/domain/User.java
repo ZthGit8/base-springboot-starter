@@ -1,5 +1,6 @@
 package com.my.base.test.domain;
 
+import com.my.base.common.annotation.LockField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
 import lombok.AllArgsConstructor;
@@ -16,9 +17,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
+    @LockField()
     @Schema(description="")
     private Integer id;
-
+    @LockField()
     @Schema(description="")
     private String name;
 

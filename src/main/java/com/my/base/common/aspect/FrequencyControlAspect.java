@@ -48,15 +48,11 @@ public class FrequencyControlAspect {
             // 获取频控注解
             FrequencyControl frequencyControl = annotationsByType[i];
             String prefix = StrUtil.isBlank(frequencyControl.prefixKey()) ? /* 默认方法限定名 + 注解排名（可能多个）*/method.toGenericString() + ":index:" + i : frequencyControl.prefixKey();
-            String key = "";
-            switch (frequencyControl.target()) {
-                case EL:
-                    key = SpElUtil.parseSpEl(method, joinPoint.getArgs(), frequencyControl.spEl());
-                    break;
-                case IP:
-                    key = RequestContext.getRequestInfo().getRequestIp();
-                    break;
-            }
+            String key = switch (frequencyControl.target()) {
+                case EL -> SpElUtil.parseSpEl(method, joinPoint.getArgs(), frequencyControl.spEl());
+                case IP -> RequestContext.getRequestInfo().getRequestIp();
+                default -> "";
+            };
             keyMap.put(prefix + ":" + key, frequencyControl);
             strategy = frequencyControl.strategy();
         }

@@ -50,11 +50,11 @@ public class RedisUtil {
      * @param lockKey
      * @return
      */
-    public static boolean releaseLock(String lockKey) {
+    public static boolean releaseLock(String lockKey, String lockValue) {
         String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
         RedisScript<Long> redisScript = new DefaultRedisScript<>(script, Long.class);
-        Long result = stringRedisTemplate.execute(redisScript, Collections.singletonList(lockKey), "1");
-        return result == 1L;
+        Long result = stringRedisTemplate.execute(redisScript, Collections.singletonList(lockKey), lockValue);
+        return result != null && result == 1;
     }
 
     /**
@@ -1228,8 +1228,8 @@ public class RedisUtil {
                 destKey);
     }
 
-    public static boolean setIfAbsent(String key, Object value, long time, TimeUnit timeUnit) {
-        return Boolean.TRUE.equals(stringRedisTemplate.opsForValue().setIfAbsent(key, objToStr(value), time, timeUnit));
+    public static boolean setIfAbsent(String key, String value) {
+        return Boolean.TRUE.equals(stringRedisTemplate.opsForValue().setIfAbsent(key, value));
     }
 
 }
