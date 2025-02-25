@@ -1,6 +1,5 @@
 package com.my.base.common.aspect;
 
-import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.my.base.common.annotation.DistributionLock;
 import com.my.base.common.annotation.LockField;
@@ -16,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -47,7 +45,7 @@ public class DistributionLockAspect {
                 (name, service) -> lockServiceMap.put(service.getLockType(), service)
         );
     }
-
+    
     // 环绕通知，用于处理带有DistributionLock注解的方法
     @Around("@annotation(com.my.base.common.annotation.DistributionLock)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -56,6 +54,11 @@ public class DistributionLockAspect {
         // 获取方法上的DistributionLock注解
         DistributionLock distributionLock = method.getAnnotation(DistributionLock.class);
 
+        // 参数校验
+        if (distributionLock == null) {
+            throw new IllegalStateException("DistributionLock annotation not found");
+        }
+
         // 确定锁的前缀键，如果注解中未指定，则使用SpEl表达式生成的方法键
         String prefix = StrUtil.isBlank(distributionLock.prefixKey()) ? SpElUtil.getMethodKey(method) : distributionLock.prefixKey();
 
@@ -63,10 +66,20 @@ public class DistributionLockAspect {
         String key = getLockKey(joinPoint, method);
 
         // 根据注解中指定的锁类型获取对应的LockService实现
-        LockService lockService = lockServiceMap.get(distributionLock.useLockType());
+        LockService lockService = Optional.ofNullable(lockServiceMap.get(distributionLock.useLockType()))
+                .orElseThrow(() -> new IllegalStateException("LockService not found for type: " + distributionLock.useLockType()));
 
-        // 使用分布式锁执行方法，并返回结果
-        return lockService.executeWithLockThrows(prefix + ":" + key, distributionLock.waitTime(), distributionLock.unit(), joinPoint::proceed);
+        // 构建完整的锁键
+        String lockKey = prefix + ":" + key;
+        log.debug("Acquiring distributed lock with key: {}", lockKey);
+
+        try {
+            // 使用分布式锁执行方法，并返回结果
+            return lockService.executeWithLockThrows(lockKey, distributionLock.waitTime(), distributionLock.unit(), joinPoint::proceed);
+        } catch (Throwable e) {
+            log.error("Error executing method with distributed lock. Key: {}, Error: {}", lockKey, e.getMessage());
+            throw e;
+        }
     }
 
     private String getLockKey(ProceedingJoinPoint joinPoint, Method method) {
