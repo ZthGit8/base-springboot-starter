@@ -23,19 +23,21 @@ public class SpElUtil {
      * @throws IllegalAccessException
      */
     public static String parseSpEl(Method method, Object[] args, String spEl) throws IllegalAccessException {
-        String[] params = Optional.ofNullable(parameterNameDiscoverer.getParameterNames(method)).orElse(new String[]{});//解析参数名
-        EvaluationContext context = null;//el解析需要的上下文对象
+        String[] params = Optional.ofNullable(parameterNameDiscoverer.getParameterNames(method)).orElse(new String[]{});
+        EvaluationContext context = new StandardEvaluationContext(); // 初始化默认上下文
+        
         for (int i = 0; i < params.length; i++) {
             Object arg = args[i];
-            Class<?> aClass = arg.getClass();
-            //判断 aClass 是否是基本数据类型或基本类型包装类
-            if (aClass.isPrimitive() || aClass.isAssignableFrom(Number.class)) {
-                context = new StandardEvaluationContext();
-                context.setVariable(params[i], arg);//基本数据类型直接扔进去
-            } else {//对象类型获取字段上的注解判断是否需要忽略
-                context = new StandardEvaluationContext(arg);
+            if (arg != null) {  // 添加空值检查
+                Class<?> aClass = arg.getClass();
+                if (aClass.isPrimitive() || aClass.isAssignableFrom(Number.class)) {
+                    context.setVariable(params[i], arg);
+                } else {
+                    context = new StandardEvaluationContext(arg);
+                }
             }
         }
+        
         Expression expression = parser.parseExpression(spEl);
         return expression.getValue(context, String.class);
     }

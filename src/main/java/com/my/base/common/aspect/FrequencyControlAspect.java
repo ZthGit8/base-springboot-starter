@@ -19,9 +19,8 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -32,91 +31,71 @@ import java.util.stream.Collectors;
 @Component
 public class FrequencyControlAspect {
 
-    private static final String TOTAL_COUNT_WITH_IN_FIX_TIME = FrequencyControlConstant.TOTAL_COUNT_WITH_IN_FIX_TIME;
-
-    private static final String SLIDING_WINDOW = FrequencyControlConstant.SLIDING_WINDOW;
-
-    private static final String TOKEN_BUCKET = FrequencyControlConstant.TOKEN_BUCKET;
 
     @Around("@annotation(com.my.base.common.annotation.FrequencyControl) || @annotation(com.my.base.common.annotation.FrequencyControlContainer)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
-        FrequencyControl[] annotationsByType = method.getAnnotationsByType(FrequencyControl.class);
-        Map<String, FrequencyControl> keyMap = new HashMap<>();
-        String strategy = TOTAL_COUNT_WITH_IN_FIX_TIME;
-        for (int i = 0; i < annotationsByType.length; i++) {
-            // 获取频控注解
-            FrequencyControl frequencyControl = annotationsByType[i];
-            String prefix = StrUtil.isBlank(frequencyControl.prefixKey()) ? /* 默认方法限定名 + 注解排名（可能多个）*/method.toGenericString() + ":index:" + i : frequencyControl.prefixKey();
-            String key = switch (frequencyControl.target()) {
-                case EL -> SpElUtil.parseSpEl(method, joinPoint.getArgs(), frequencyControl.spEl());
-                case IP -> RequestContext.getRequestInfo().getRequestIp();
-                default -> "";
-            };
-            keyMap.put(prefix + ":" + key, frequencyControl);
-            strategy = frequencyControl.strategy();
-        }
-        // 将注解的参数转换为编程式调用需要的参数
-        if (TOTAL_COUNT_WITH_IN_FIX_TIME.equals(strategy)) {
-            // 调用编程式注解 固定窗口
-            List<FrequencyControlDTO> frequencyControlDTOS = keyMap.entrySet().stream().map(entrySet -> buildFixedWindowDTO(entrySet.getKey(), entrySet.getValue())).collect(Collectors.toList());
-            return FrequencyControlInvoke.executeWithFrequencyControlList(strategy, frequencyControlDTOS, joinPoint::proceed);
-
-        } else if (TOKEN_BUCKET.equals(strategy)) {
-            // 调用编程式注解 令牌桶
-            List<TokenBucketDTO> frequencyControlDTOS = keyMap.entrySet().stream().map(entrySet -> buildTokenBucketDTO(entrySet.getKey(), entrySet.getValue())).collect(Collectors.toList());
-            return FrequencyControlInvoke.executeWithFrequencyControlList(strategy, frequencyControlDTOS, joinPoint::proceed);
-        } else {
-            // 调用编程式注解 滑动窗口
-            List<SlidingWindowDTO> frequencyControlDTOS = keyMap.entrySet().stream().map(entrySet -> buildSlidingWindowFrequencyControlDTO(entrySet.getKey(), entrySet.getValue())).collect(Collectors.toList());
-            return FrequencyControlInvoke.executeWithFrequencyControlList(strategy, frequencyControlDTOS, joinPoint::proceed);
-        }
+        FrequencyControl[] annotations = method.getAnnotationsByType(FrequencyControl.class);
+        
+        String strategy = annotations[0].strategy(); // 所有注解使用相同策略
+        List<FrequencyControlDTO> dtos = buildFrequencyControlDTOs(method, joinPoint, annotations);
+        
+        return FrequencyControlInvoke.executeWithFrequencyControlList(strategy, dtos, joinPoint::proceed);
     }
 
-    /**
-     * 将注解参数转换为编程式调用所需要的参数
-     *
-     * @param key              频率控制Key
-     * @param frequencyControl 注解
-     * @return 编程式调用所需要的参数-FrequencyControlDTO
-     */
-    private SlidingWindowDTO buildSlidingWindowFrequencyControlDTO(String key, FrequencyControl frequencyControl) {
-        SlidingWindowDTO frequencyControlDTO = new SlidingWindowDTO();
-        frequencyControlDTO.setWindowSize(frequencyControl.windowSize());
-        frequencyControlDTO.setPeriod(frequencyControl.period());
-        frequencyControlDTO.setCount(frequencyControl.count());
-        frequencyControlDTO.setUnit(frequencyControl.unit());
-        frequencyControlDTO.setKey(key);
-        return frequencyControlDTO;
+    private List<FrequencyControlDTO> buildFrequencyControlDTOs(Method method, ProceedingJoinPoint joinPoint, FrequencyControl[] annotations) {
+        return Arrays.stream(annotations)
+            .map(annotation -> {
+                String prefix = getPrefix(method, annotation);
+                String key = getKey(method, joinPoint, annotation);
+                return buildDTO(prefix + ":" + key, annotation);
+            })
+            .collect(Collectors.toList());
     }
 
-    /**
-     * 将注解参数转换为编程式调用所需要的参数
-     *
-     * @param key              频率控制Key
-     * @param frequencyControl 注解
-     * @return 编程式调用所需要的参数-FrequencyControlDTO
-     */
-    private TokenBucketDTO buildTokenBucketDTO(String key, FrequencyControl frequencyControl) {
-        TokenBucketDTO tokenBucketDTO = new TokenBucketDTO(frequencyControl.capacity(), frequencyControl.refillRate());
-        tokenBucketDTO.setKey(key);
-        return tokenBucketDTO;
+    private String getPrefix(Method method, FrequencyControl annotation) {
+        return StrUtil.isBlank(annotation.prefixKey()) ? 
+            method.toGenericString() + ":index:" + Arrays.asList(method.getAnnotationsByType(FrequencyControl.class)).indexOf(annotation) :
+            annotation.prefixKey();
     }
 
-    /**
-     * 将注解参数转换为编程式调用所需要的参数
-     *
-     * @param key              频率控制Key
-     * @param frequencyControl 注解
-     * @return 编程式调用所需要的参数-FrequencyControlDTO
-     */
-    private FixedWindowDTO buildFixedWindowDTO(String key, FrequencyControl frequencyControl) {
-        FixedWindowDTO fixedWindowDTO = new FixedWindowDTO();
-        fixedWindowDTO.setCount(frequencyControl.count());
-        fixedWindowDTO.setTime(frequencyControl.time());
-        fixedWindowDTO.setUnit(frequencyControl.unit());
-        fixedWindowDTO.setKey(key);
-        fixedWindowDTO.setOneKeyMultiplyControl(frequencyControl.isOneKeyMultiplyControl());
-        return fixedWindowDTO;
+    private String getKey(Method method, ProceedingJoinPoint joinPoint, FrequencyControl annotation) {
+        return switch (annotation.target()) {
+            case EL -> {
+                try {
+                    yield SpElUtil.parseSpEl(method, joinPoint.getArgs(), annotation.spEl());
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException("Failed to parse SpEl expression", e);
+                }
+            }
+            case IP -> RequestContext.getRequestInfo().getRequestIp();
+            default -> "";
+        };
+    }
+
+    private FrequencyControlDTO buildDTO(String key, FrequencyControl annotation) {
+        FrequencyControlDTO dto = switch (annotation.strategy()) {
+            case FrequencyControlConstant.TOTAL_COUNT_WITH_IN_FIX_TIME -> {
+                FixedWindowDTO fixedDto = new FixedWindowDTO();
+                fixedDto.setCount(annotation.count());
+                fixedDto.setTime(annotation.time());
+                fixedDto.setUnit(annotation.unit());
+                fixedDto.setOneKeyMultiplyControl(annotation.isOneKeyMultiplyControl());
+                yield fixedDto;
+            }
+            case FrequencyControlConstant.TOKEN_BUCKET -> new TokenBucketDTO(annotation.capacity(), annotation.refillRate());
+            case FrequencyControlConstant.SLIDING_WINDOW -> {
+                SlidingWindowDTO slidingDto = new SlidingWindowDTO();
+                slidingDto.setWindowSize(annotation.windowSize());
+                slidingDto.setPeriod(annotation.period());
+                slidingDto.setCount(annotation.count());
+                slidingDto.setUnit(annotation.unit());
+                yield slidingDto;
+            }
+            default -> throw new IllegalArgumentException("Unknown strategy: " + annotation.strategy());
+        };
+        
+        dto.setKey(key);
+        return dto;
     }
 }
