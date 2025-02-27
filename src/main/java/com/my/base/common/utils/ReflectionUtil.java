@@ -90,7 +90,7 @@ public class ReflectionUtil extends ReflectUtil {
      * @return {@link Class}
      * @description 通过反射, 获得定义 Class 时声明的父类的泛型参数的类型 如: public EmployeeDao extends BaseDao<Employee, String>
      */
-    public static Class getSuperClassGenericType(Class clazz, int index) {
+    public static Class<?> getSuperClassGenericType(Class<?> clazz, int index) {
         Type genType = clazz.getGenericSuperclass();
 
         if (!(genType instanceof ParameterizedType)) {
@@ -103,11 +103,11 @@ public class ReflectionUtil extends ReflectUtil {
             return Object.class;
         }
 
-        if (!(params[index] instanceof Class)) {
+        if (!(params[index] instanceof Class<?>)) {
             return Object.class;
         }
 
-        return (Class) params[index];
+        return (Class<?>) params[index];
     }
 
     /**
@@ -116,8 +116,8 @@ public class ReflectionUtil extends ReflectUtil {
      * @description 通过反射, 获得 Class 定义中声明的父类的泛型参数类型 如: public EmployeeDao extends BaseDao<Employee, String>
      */
     @SuppressWarnings("unchecked")
-    public static <T> Class<T> getSuperGenericType(Class clazz) {
-        return getSuperClassGenericType(clazz, 0);
+    public static <T> Class<T> getSuperGenericType(Class<?> clazz) {
+        return (Class<T>) getSuperClassGenericType(clazz, 0);
     }
 
     /**

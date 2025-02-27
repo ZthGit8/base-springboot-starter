@@ -55,7 +55,7 @@ public class WebLogAspect {
      * warn日志只能打印在同一行，因为只有等到ApiResult结果才知道是success=false。
      * <p>
      * 如果ApiResult返回success=true，则打印info日志；
-     * 特别注意：由于info级别日志已经包含了warn级别日志。如果开了info级别日志，warn就不会打印了。
+     * 特别注意：由于info级别日志已经包含了warn级别日志。如果开了info级别日志，warn就不会打印了。==
      */
     @Around("execution(* com..controller..*.*(..))")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
