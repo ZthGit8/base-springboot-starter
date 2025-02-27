@@ -1,8 +1,5 @@
 package com.my.base;
 
-import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
-import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import com.my.base.common.interceptor.MybatisPlusAllSqlLog;
 import com.my.base.common.sensitive.ACFilter;
 import com.my.base.common.sensitive.DFAFilter;
 import com.my.base.common.sensitive.SensitiveWordBs;
@@ -32,11 +29,13 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.LocaleResolver;
 
 import java.util.Locale;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
 @Configuration
@@ -84,7 +83,7 @@ public class MyBaseAutoConfiguration {
 
     @Bean
     public Request.Options options() {
-        return new Request.Options(30000, 60000);
+        return new Request.Options(30000, TimeUnit.MILLISECONDS, 60000, TimeUnit.MILLISECONDS, true);
     }
 
     @Bean
@@ -143,43 +142,28 @@ public class MyBaseAutoConfiguration {
     private static class LocaleResolverConfig implements LocaleResolver {
 
         @Override
-        public Locale resolveLocale(HttpServletRequest request) {
+        @NonNull
+        public Locale resolveLocale(@Nullable HttpServletRequest request) {
+            if (request == null) {
+                return Locale.getDefault();
+            }
             // 获取请求来的语言方式
             String language = request.getHeader("lang");
             // 获取请求头默认的local对象
             Locale locale = request.getLocale();
             if (StringUtils.isNoneBlank(language)) {
-                // 按照指定的正则表达式，解析出相关的数据信息
                 String[] split = language.split("_");
-                // 解析出数据后，修改local对象
-                if (split.length == 2)
-                    locale = Locale.of(split[0], split[1]);
+                if (split.length == 2) {
+                    return Locale.of(split[0], split[1]);
+                }
             }
-            return locale;
+            return locale != null ? locale : Locale.getDefault();
         }
 
         @Override
-        public void setLocale(@Nullable HttpServletRequest request, HttpServletResponse response, Locale locale) {
+        public void setLocale(@Nullable HttpServletRequest request, @Nullable HttpServletResponse response, @Nullable Locale locale) {
 
         }
     }
-
-//    @Bean
-//    @ConditionalOnBean({MybatisPlusAllSqlLog.class})
-//    public MybatisPlusInterceptor mybatisPlusInterceptor(MybatisPlusAllSqlLog mybatisPlusAllSqlLog) {
-//        MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();
-//        mybatisPlusInterceptor.addInnerInterceptor(mybatisPlusAllSqlLog);
-//        return mybatisPlusInterceptor;
-//    }
-//
-//    @Bean
-//    public MybatisPlusInterceptor paginationInterceptor() {
-//        MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();
-//        PaginationInnerInterceptor paginationInnerInterceptor = new PaginationInnerInterceptor();
-//        paginationInnerInterceptor.setOverflow(false);
-//        paginationInnerInterceptor.setMaxLimit(1000L);
-//        mybatisPlusInterceptor.addInnerInterceptor(paginationInnerInterceptor);
-//        return mybatisPlusInterceptor;
-//    }
 
 }

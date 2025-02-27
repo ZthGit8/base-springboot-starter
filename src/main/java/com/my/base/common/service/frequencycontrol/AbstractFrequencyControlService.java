@@ -22,7 +22,8 @@ import java.util.stream.Collectors;
  * @param <K>
  */
 @Slf4j
-public abstract class AbstractFrequencyControlService<K extends FrequencyControlDTO> implements FrequencyControl<K> {
+public abstract class AbstractFrequencyControlService<K extends FrequencyControlDTO> 
+    implements FrequencyControl<K> {
 
     /**
      * @param frequencyControlMap 定义的注解频控 Map中的Key-对应redis的单个频控的Key Map中的Value-对应redis的单个频控的Key限制的Value
@@ -51,7 +52,6 @@ public abstract class AbstractFrequencyControlService<K extends FrequencyControl
      * @return 业务方法执行的返回值
      * @throws Throwable 被限流或者限流策略定义错误
      */
-    @SuppressWarnings("unchecked")
     public <T> T executeWithFrequencyControlList(List<K> frequencyControlList, SupplierThrowWithoutParam<T> supplier) throws Throwable {
         boolean existsFrequencyControlHasNullKey = frequencyControlList.stream().anyMatch(frequencyControl -> ObjectUtils.isEmpty(frequencyControl.getKey()));
         AssertUtil.isFalse(existsFrequencyControlHasNullKey, "限流策略的Key字段不允许出现空值");

@@ -1,10 +1,8 @@
 package com.my.base.common.service.frequencycontrol;
 
-
 import com.my.base.common.frequencycontrol.domain.FrequencyControlDTO;
 import com.my.base.common.frequencycontrol.strategy.FrequencyControl;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -16,23 +14,11 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 public class FrequencyControlStrategyFactory implements InitializingBean {
+    private final ApplicationContext applicationContext;
+    private static final Map<String, FrequencyControl<?>> STRATEGY_MAP = new ConcurrentHashMap<>(8);
 
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    /**
-     * 限流策略集合
-     */
-    static Map<String, FrequencyControl<?>> frequencyControlServiceStrategyMap = new ConcurrentHashMap<>(8);
-
-    /**
-     * 将策略类放入工厂
-     *
-     * @param strategyName                    策略名称
-     * @param frequencyControl 策略类
-     */
-    public static <K extends FrequencyControlDTO> void registerFrequencyController(String strategyName, FrequencyControl<K> frequencyControl) {
-        frequencyControlServiceStrategyMap.put(strategyName, frequencyControl);
+    public FrequencyControlStrategyFactory(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     /**
@@ -42,26 +28,16 @@ public class FrequencyControlStrategyFactory implements InitializingBean {
      * @return 对应的限流策略类
      */
     @SuppressWarnings("unchecked")
-    public static <K extends FrequencyControlDTO> FrequencyControl<K> getFrequencyControllerByName(String strategyName) {
-        return (FrequencyControl<K>) frequencyControlServiceStrategyMap.get(strategyName);
-    }
-
-    /**
-     * 构造器私有
-     */
-    private FrequencyControlStrategyFactory() {
-
+    public static <K extends FrequencyControlDTO> FrequencyControl<K> getStrategy(String strategyName) {
+        return (FrequencyControl<K>) STRATEGY_MAP.get(strategyName);
     }
 
     @Override
     public void afterPropertiesSet() {
-        Map<String, ? extends AbstractFrequencyControlService> beansOfType = applicationContext.getBeansOfType(AbstractFrequencyControlService.class,true,false);
-        beansOfType.values().forEach(service -> {
-            try {
-                FrequencyControlStrategyFactory.registerFrequencyController(service.getStrategyName(), service);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to register frequency controller: " + service.getStrategyName() + e);
-            }
-        });
+        Map<String, AbstractFrequencyControlService> services = 
+            applicationContext.getBeansOfType(AbstractFrequencyControlService.class);
+        
+        services.values().forEach(service -> 
+            STRATEGY_MAP.put(service.getStrategyName(), service));
     }
 }

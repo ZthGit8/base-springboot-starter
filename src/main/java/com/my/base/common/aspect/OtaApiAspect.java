@@ -32,74 +32,88 @@ import java.util.TreeMap;
 @Component
 public class OtaApiAspect {
 
+    /**
+     * Redis中存储nonce的key前缀
+     */
     private static final String NONCE_KEY = "X-NONCE-";
 
+    /**
+     * 处理带有@OtaApi注解的方法
+     * 验证请求参数的合法性,包括:
+     * 1. 必要的请求头参数校验
+     * 2. 时间戳验证,防止重放攻击
+     * 3. nonce验证,防止重复请求
+     * 4. 签名验证,确保请求未被篡改
+     *
+     * @param joinPoint 切点
+     * @return 处理结果
+     * @throws Throwable 处理过程中的异常
+     */
     @Before("@annotation(com.my.base.common.annotation.OtaApi)")
     private Object doBefore(ProceedingJoinPoint joinPoint) throws Throwable {
+        // 获取当前请求信息
         RequestInfo requestInfo = RequestContext.getRequestInfo();
 
+        // 获取方法签名和注解信息
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         OtaApi otaApi = method.getAnnotation(OtaApi.class);
 
-        //获取请求参数
+        // 获取方法参数
         Parameter[] parameters = method.getParameters();
         Object[] args = joinPoint.getArgs();
 
-        //验证请求头是否存在
-        if (StringUtils.isEmpty(requestInfo.getSign()) || ObjectUtils.isEmpty(requestInfo.getTimestamp()) || StringUtils.isEmpty(requestInfo.getNonce())) {
+        // 1. 验证必要的请求头参数
+        if (StringUtils.isEmpty(requestInfo.getSign()) 
+            || ObjectUtils.isEmpty(requestInfo.getTimestamp()) 
+            || StringUtils.isEmpty(requestInfo.getNonce())) {
             return Result.fail("sign,timestamp,nonce 不能为空");
         }
-        /*
-         * 1.重放验证
-         * 判断timestamp时间戳与当前时间是否超过60s（过期时间根据业务情况设置）,如果超过了就提示签名过期。
-         */
-        long now = System.currentTimeMillis() / 1000;
 
+        // 2. 验证时间戳,防止重放攻击
+        long now = System.currentTimeMillis() / 1000;
         if (now - requestInfo.getTimestamp() > otaApi.keepTime()) {
             return Result.fail(String.format("签名过期：timestamp 与本服务时间相差超过[%d]s", otaApi.keepTime()));
         }
 
-        //2. 判断nonce
-        boolean nonceExists = RedisUtil.hasKey(NONCE_KEY + requestInfo.getNonce());
-        if (nonceExists) {
-            //请求重复
+        // 3. 验证nonce,防止重复请求
+        String nonceKey = NONCE_KEY + requestInfo.getNonce();
+        if (RedisUtil.hasKey(nonceKey)) {
             return Result.fail("请求重复");
-        } else {
-            RedisUtil.set(NONCE_KEY + requestInfo.getNonce(), requestInfo.getNonce(), otaApi.nonceMaxTime());
         }
+        RedisUtil.set(nonceKey, requestInfo.getNonce(), otaApi.nonceMaxTime());
 
+        // 4. 验证签名
         SortedMap<String, String> paramMap = getParams(parameters, args);
-
-        //3. 验证签名
         if (!verifySign(paramMap, requestInfo)) {
             return Result.fail("签名错误");
         }
+
         return joinPoint.proceed();
     }
 
     /**
-     * 获取请求参数map
+     * 将方法参数转换为有序Map
      *
-     * @param parameters
-     * @param args
-     * @return
+     * @param parameters 方法参数定义数组
+     * @param args 方法参数值数组
+     * @return 参数名和参数值的有序Map
      */
-    public SortedMap<String, String> getParams(Parameter[] parameters, Object[] args) {
+    private SortedMap<String, String> getParams(Parameter[] parameters, Object[] args) {
         SortedMap<String, String> paramMap = new TreeMap<>();
         for (int i = 0; i < parameters.length; i++) {
-            Parameter parameter = parameters[i];
-            String name = parameter.getName();
-            Object arg = args[i];
-            paramMap.put(name, arg.toString());
+            paramMap.put(parameters[i].getName(), String.valueOf(args[i]));
         }
         return paramMap;
-
     }
 
     /**
-     * 验证签名
-     * 验证算法：把 timestamp + JSONUtil.toJsonStr(SortedMap)合成字符串，然后MD5
+     * 验证请求签名
+     * 签名算法: MD5(nonce + timestamp + JSONUtil.toJsonStr(SortedMap))
+     *
+     * @param map 请求参数Map
+     * @param requestInfo 请求信息
+     * @return 签名是否有效
      */
     @SneakyThrows
     public static boolean verifySign(SortedMap<String, String> map, RequestInfo requestInfo) {
@@ -108,7 +122,11 @@ public class OtaApiAspect {
     }
 
     /**
-     * 验证签名
+     * 验证请求签名
+     *
+     * @param params 待签名的参数字符串
+     * @param requestInfo 请求信息
+     * @return 签名是否有效
      */
     public static boolean verifySign(String params, RequestInfo requestInfo) {
         if (StringUtils.isEmpty(params)) {
