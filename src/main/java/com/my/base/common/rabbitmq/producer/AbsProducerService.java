@@ -100,7 +100,7 @@ public abstract class AbsProducerService<T> implements ProducerService<T> {
                     callback.confirm(correlationData, ack, cause);
                 }
                 if (correlationData != null) {
-                    log.error("id：{} 消息发送失败:{}", correlationData.getId(), cause);
+                    log.error("消息发送到Exchange失败, {}, cause: {}", correlationData, cause);
                 }
             }
         });

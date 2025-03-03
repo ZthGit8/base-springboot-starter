@@ -6,6 +6,7 @@ import lombok.Getter;
 /**
  * 队列，交换机。路由 常量枚举
  */
+@Getter
 public enum  RabbitEnum {
 
     QUEUE("{}.queue", "队列名称"),
@@ -20,10 +21,8 @@ public enum  RabbitEnum {
         this.desc = desc;
     }
 
-    @Getter
-    private String value;
+    private final String value;
 
-    @Getter
-    private String desc;
+    private final String desc;
 
 }
