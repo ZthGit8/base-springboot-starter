@@ -1,0 +1,175 @@
+{
+  "groups": [
+    {
+      "name": "spring.rabbitmq",
+      "type": "com.my.base.config.property.RabbitModuleProperties",
+      "description": "配置MQ队列，交换机，生产者消费者",
+      "sourceType": "com.my.base.config.property.RabbitModuleProperties"
+    },
+    {
+      "name": "my.base",
+      "type": "com.my.base.config.property.BaseProperties",
+      "description": "base基础功能配置",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.rabbitmq.modules",
+      "type": "java.util.List<com.my.base.config.property.MQProperties>",
+      "description": "模块配置",
+      "sourceType": "com.my.base.config.property.RabbitModuleProperties"
+    },
+    {
+      "name": "spring.rabbitmq.consistency",
+      "type": "boolean",
+      "description": "是否开启消息一致性",
+      "sourceType": "com.my.base.config.property.RabbitModuleProperties"
+    },
+    {
+      "name": "my.base.thread-prefix",
+      "type": "java.lang.String",
+      "description": "线程池前缀",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    },
+    {
+      "name": "my.base.request-log-enable",
+      "type": "boolean",
+      "description": "是否打印或存储请求响应日志",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    },
+    {
+      "name": "my.base.slow-sql-log-enable",
+      "type": "boolean",
+      "description": "是否存储慢Sql日志",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    },
+    {
+      "name": "my.base.sql-log-enable",
+      "type": "boolean",
+      "description": "是否打印或存储Sql日志",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    },
+    {
+      "name": "my.base.use-sensitive-word-type",
+      "type": "java.lang.String",
+      "description": "使用那种敏感词过滤策略 默认使用DFA，可以使用AC",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    },
+    {
+      "name": "my.base.core-pool-size",
+      "type": "int",
+      "description": "线程池核心线程数",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    },
+    {
+      "name": "my.base.max-pool-size",
+      "type": "int",
+      "description": "线程池最大线程数",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    },
+    {
+      "name": "my.base.keep-alive-seconds",
+      "type": "int",
+      "description": "线程池线程空闲时间",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    },
+    {
+      "name": "my.base.queue-capacity",
+      "type": "int",
+      "description": "线程池队列大小",
+      "sourceType": "com.my.base.config.property.BaseProperties"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].routing-key",
+      "type": "java.lang.String",
+      "description": "路由Key",
+      "sourceType": "com.my.base.config.property.MQProperties"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].producer",
+      "type": "java.lang.String",
+      "description": "生产者",
+      "sourceType": "com.my.base.config.property.MQProperties"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].consumer",
+      "type": "java.lang.String",
+      "description": "消费者，可以是 bean 名称和 class 类名",
+      "sourceType": "com.my.base.config.property.MQProperties"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].auto-ack",
+      "type": "java.lang.Boolean",
+      "description": "自动确认",
+      "sourceType": "com.my.base.config.property.MQProperties"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].queue.name",
+      "type": "java.lang.String",
+      "description": "队列名称",
+      "sourceType": "com.my.base.config.property.MQProperties.Queue"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].queue.durable",
+      "type": "boolean",
+      "description": "是否持久化",
+      "sourceType": "com.my.base.config.property.MQProperties.Queue"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].queue.exclusive",
+      "type": "boolean",
+      "description": "是否具有排他性",
+      "sourceType": "com.my.base.config.property.MQProperties.Queue"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].queue.auto-delete",
+      "type": "boolean",
+      "description": "当消费者均断开连接，是否自动删除队列",
+      "sourceType": "com.my.base.config.property.MQProperties.Queue"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].queue.dead-letter-exchange",
+      "type": "java.lang.String",
+      "description": "绑定死信队列的交换机名称",
+      "sourceType": "com.my.base.config.property.MQProperties.Queue"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].queue.dead-letter-routing-key",
+      "type": "java.lang.String",
+      "description": "绑定死信队列的路由key",
+      "sourceType": "com.my.base.config.property.MQProperties.Queue"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].exchange.type",
+      "type": "com.my.base.common.rabbitmq.constants.RabbitExchangeTypeEnum",
+      "description": "交换机类型 默认主题交换机",
+      "sourceType": "com.my.base.config.property.MQProperties.Exchange"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].exchange.name",
+      "type": "java.lang.String",
+      "description": "交换机名称",
+      "sourceType": "com.my.base.config.property.MQProperties.Exchange"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].exchange.durable",
+      "type": "boolean",
+      "description": "是否持久化 默认true持久化，重启消息不会丢失",
+      "sourceType": "com.my.base.config.property.MQProperties.Exchange"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].exchange.auto-delete",
+      "type": "boolean",
+      "description": "当所有队绑定列均不在使用时，是否自动删除交换机 默认false，不自动删除",
+      "sourceType": "com.my.base.config.property.MQProperties.Exchange"
+    },
+    {
+      "name": "spring.rabbitmq.modules[].retry",
+      "type": "java.lang.String",
+      "description": "重试器",
+      "sourceType": "com.my.base.config.property.MQProperties"
+    }
+  ],
+  "hints": []
+}
