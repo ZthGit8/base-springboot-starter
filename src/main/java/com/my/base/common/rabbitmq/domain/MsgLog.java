@@ -1,7 +1,10 @@
 package com.my.base.common.rabbitmq.domain;
 
+import lombok.Data;
+
 import java.util.Date;
 
+@Data
 public class MsgLog {
 
     /**
@@ -59,103 +62,5 @@ public class MsgLog {
      */
     private Date updateTime;
 
-    public String getMsgId() {
-        return msgId;
-    }
-
-    public MsgLog setMsgId(String msgId) {
-        this.msgId = msgId;
-        return this;
-    }
-
-    public String getExchange() {
-        return exchange;
-    }
-
-    public MsgLog setExchange(String exchange) {
-        this.exchange = exchange;
-        return this;
-    }
-
-    public String getRouteKey() {
-        return routeKey;
-    }
-
-    public MsgLog setRouteKey(String routeKey) {
-        this.routeKey = routeKey;
-        return this;
-    }
-
-    public String getQueueName() {
-        return queueName;
-    }
-
-    public MsgLog setQueueName(String queueName) {
-        this.queueName = queueName;
-        return this;
-    }
-
-    public String getMsg() {
-        return msg;
-    }
-
-    public MsgLog setMsg(String msg) {
-        this.msg = msg;
-        return this;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
-
-    public MsgLog setStatus(Integer status) {
-        this.status = status;
-        return this;
-    }
-
-    public Integer getTryCount() {
-        return tryCount;
-    }
-
-    public MsgLog setTryCount(Integer tryCount) {
-        this.tryCount = tryCount;
-        return this;
-    }
-
-    public Date getNextTryTime() {
-        return nextTryTime;
-    }
-
-    public MsgLog setNextTryTime(Date nextTryTime) {
-        this.nextTryTime = nextTryTime;
-        return this;
-    }
-
-    public Date getCreateTime() {
-        return createTime;
-    }
-
-    public MsgLog setCreateTime(Date createTime) {
-        this.createTime = createTime;
-        return this;
-    }
-
-    public Date getUpdateTime() {
-        return updateTime;
-    }
-
-    public MsgLog setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
-        return this;
-    }
-
-    public String getResult() {
-        return result;
-    }
-
-    public MsgLog setResult(String result) {
-        this.result = result;
-        return this;
-    }
 }
 

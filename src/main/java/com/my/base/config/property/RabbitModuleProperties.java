@@ -18,6 +18,10 @@ public class RabbitModuleProperties {
     /**
      * 模块配置
      */
-    List<ModuleProperties> modules;
+    List<MQProperties> modules;
+    /**
+     * 是否开启消息一致性
+     */
+    boolean consistency;
 
 }

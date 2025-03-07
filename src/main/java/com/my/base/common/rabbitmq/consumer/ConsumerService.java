@@ -1,4 +1,4 @@
-package com.my.base.common.rabbitmq.comsumer;
+package com.my.base.common.rabbitmq.consumer;
 
 import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
 

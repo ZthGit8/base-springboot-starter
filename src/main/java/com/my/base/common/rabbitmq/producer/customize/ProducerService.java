@@ -1,4 +1,4 @@
-package com.my.base.common.rabbitmq.producer;
+package com.my.base.common.rabbitmq.producer.customize;
 
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
