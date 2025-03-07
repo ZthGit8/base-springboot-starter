@@ -10,7 +10,7 @@ import java.util.Map;
  *
  */
 @Data
-public class ModuleProperties {
+public class MQProperties {
 
     /**
      * 路由Key
@@ -23,7 +23,7 @@ public class ModuleProperties {
     private String producer;
 
     /**
-     * 消费者
+     * 消费者，可以是 bean 名称和 class 类名
      */
     private String consumer;
 

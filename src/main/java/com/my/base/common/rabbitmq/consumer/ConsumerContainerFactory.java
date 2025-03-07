@@ -1,4 +1,4 @@
-package com.my.base.common.rabbitmq.comsumer;
+package com.my.base.common.rabbitmq.consumer;
 
 import com.my.base.common.rabbitmq.retry.CustomRetryListener;
 import lombok.Builder;

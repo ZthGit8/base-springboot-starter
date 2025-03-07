@@ -1,8 +1,7 @@
-package com.my.base.common.rabbitmq.producer;
+package com.my.base.common.rabbitmq.producer.customize;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
-import jakarta.annotation.Resource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
@@ -85,7 +84,6 @@ public abstract class AbsProducerService<T> implements ProducerService<T> {
         // 使用RabbitMQ的模板类发送消息，并使用前面定义的消息后处理器进行处理
         rabbitTemplate.convertAndSend(this.exchange, this.routingKey, message, messagePostProcessor);
     }
-
 
     /**
      * 设置消息发送到MQ的回调处理

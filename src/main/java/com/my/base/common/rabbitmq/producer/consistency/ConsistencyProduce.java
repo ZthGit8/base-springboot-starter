@@ -1,48 +1,40 @@
-package com.my.base.config;
+package com.my.base.common.rabbitmq.producer.consistency;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
-import com.alibaba.nacos.api.config.ConfigService;
-import com.alibaba.nacos.api.config.listener.Listener;
-import com.alibaba.nacos.api.exception.NacosException;
-import com.my.base.common.rabbitmq.consumer.ConsumerContainerFactory;
 import com.my.base.common.rabbitmq.constants.RabbitEnum;
 import com.my.base.common.rabbitmq.constants.RabbitExchangeTypeEnum;
-import com.my.base.common.rabbitmq.producer.customize.AbsProducerService;
+import com.my.base.common.rabbitmq.consumer.ConsumerContainerFactory;
+import com.my.base.common.rabbitmq.consumer.consistency.MsgLogService;
+import com.my.base.common.rabbitmq.domain.MsgDto;
+import com.my.base.common.rabbitmq.domain.MQSendParams;
+import com.my.base.common.rabbitmq.helper.MsgHelper;
 import com.my.base.common.rabbitmq.retry.CustomRetryListener;
-import com.my.base.common.storage.log.MQFailLogStorage;
 import com.my.base.config.property.MQProperties;
-import com.my.base.config.property.RabbitModuleProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 /**
- * 优雅封装RabbitMQ 实现动态队列、动态生产者，动态消费者绑定
- * RabbitMQ 全局配置
+ * <p>
+ * RabbitConfig
+ * </p>
  */
 @Slf4j
-@Configuration
-public class RabbitMqConfig implements SmartInitializingSingleton {
+@Service
+public class ConsistencyProduce {
 
     /**
      * MQ链接工厂
@@ -55,121 +47,70 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
     private final AmqpAdmin amqpAdmin;
 
     /**
-     * YML配置
+     * 消息发送模板
      */
-    private final RabbitModuleProperties rabbitModuleProperties;
-    /**
-     * NACOS配置中心
-     */
-    private final ConfigService configService;
+    private final RabbitTemplate rabbitTemplate;
 
-    @Value("${project.name}")
-    private static String dataId = "base-starter";
-
-
-    @Autowired
-    public RabbitMqConfig(AmqpAdmin amqpAdmin, RabbitModuleProperties rabbitModuleProperties, ConnectionFactory connectionFactory, ConfigService configService) {
-        this.amqpAdmin = amqpAdmin;
-        this.rabbitModuleProperties = rabbitModuleProperties;
+    public ConsistencyProduce(ConnectionFactory connectionFactory, AmqpAdmin amqpAdmin, RabbitTemplate rabbitTemplate) {
         this.connectionFactory = connectionFactory;
-        this.configService = configService;
-    }
-
-    @Bean
-    public RabbitTemplate rabbitTemplate() {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        // 设置消息转换器为json格式
-        rabbitTemplate.setMessageConverter(new Jackson2JsonMessageConverter());
-
-        // 消息是否成功发送到Exchange
-        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
-            if (!ack) {
-                log.error("消息发送到Exchange失败, {}, cause: {}", correlationData, cause);
-            }
-        });
-
-        // 触发setReturnCallback回调必须设置mandatory=true, 否则Exchange没有找到Queue就会丢弃掉消息, 而不会触发回调
-        rabbitTemplate.setMandatory(true);
-
-        // 消息是否从Exchange路由到Queue, 注意: 这是一个失败回调, 只有消息从Exchange路由到Queue失败才会回调这个方法
-        rabbitTemplate.setReturnsCallback(returned -> {
-            //TODO 可以记录发送失败的消息到msg_log表中
-            MQFailLogStorage mqFailLogStorage = SpringUtil.getBean(MQFailLogStorage.class);
-            mqFailLogStorage.save(returned.getExchange(), returned.getRoutingKey(), returned.getReplyCode(), returned.getReplyText(), returned.getMessage().toString());
-            log.error("消息从Exchange路由到Queue失败: exchange: {}, route: {}, replyCode: {}, replyText: {}, message: {}",
-                    returned.getExchange(), returned.getRoutingKey(), returned.getReplyCode(), returned.getReplyText(), returned.getMessage());
-        });
-
-        return rabbitTemplate;
-    }
-
-    @Override
-    public void afterSingletonsInstantiated() {
-
-        try {
-            // 监听配置中心
-            configService.addListener(dataId, "DEFAULT_GROUP", new Listener() {
-                @Override
-                public void receiveConfigInfo(String configInfo) {
-                    register();
-                }
-
-                @Override
-                public Executor getExecutor() {
-                    return null;
-                }
-            });
-            // 启动时加载配置
-            // register();
-        } catch (NacosException e) {
-            log.error("初始化MQ配置失败 {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    private void register() {
-        StopWatch stopWatch = StopWatch.create("MQ");
-        stopWatch.start();
-        log.debug("初始化MQ配置");
-        List<MQProperties> propertiesList = rabbitModuleProperties.getModules();
-        if (CollUtil.isEmpty(propertiesList)) {
-            log.warn("未配置MQ");
-            return;
-        }
-        for (MQProperties properties : propertiesList) {
-            try {
-                Queue queue = genQueue(properties);
-                Exchange exchange = genQueueExchange(properties);
-                queueBindExchange(queue, exchange, properties);
-                bindProducer(properties);
-                bindConsumer(queue, exchange, properties);
-            } catch (Exception e) {
-                log.error("rabbitMQ 生产者消费者绑定初始化失败:", e);
-            }
-        }
-        stopWatch.stop();
-        log.info("初始化MQ配置成功耗时: {}ms", stopWatch.getTotal(TimeUnit.MILLISECONDS));
+        this.amqpAdmin = amqpAdmin;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     /**
-     * 绑定生产者
-     *
+     * 发送消息
+     */
+    public boolean sendQueue(MQSendParams sendParams) {
+        String msgId = UUID.randomUUID().toString().replaceAll("-", "");
+        sendParams.setMsgId(msgId);
+
+        MQProperties mqProperties = new MQProperties();
+        mqProperties.setRoutingKey(sendParams.getRoutingKey());
+        // 构建队列参数
+        MQProperties.Queue queue = new MQProperties.Queue();
+        queue.setName(sendParams.getQueue());
+        queue.setDurable(sendParams.isDurable());
+        queue.setExclusive(sendParams.isExclusive());
+        queue.setAutoDelete(sendParams.isAutoDelete());
+        queue.setDeadLetterExchange(sendParams.getDeadLetterExchange());
+        queue.setDeadLetterExchange(sendParams.getDeadLetterExchange());
+        queue.setArguments(sendParams.getArguments());
+        mqProperties.setQueue(queue);
+        // 构建交换机参数
+        MQProperties.Exchange exchange = new MQProperties.Exchange();
+        exchange.setName(sendParams.getExchange());
+        exchange.setDurable(sendParams.isDurable());
+        exchange.setAutoDelete(sendParams.isAutoDelete());
+        mqProperties.setExchange(exchange);
+        // 合并配置
+        merge(mqProperties);
+
+        MsgLogService msgLogService = SpringUtil.getBean(MsgLogService.class);
+        // 1.存储要消费的数据
+        msgLogService.save(exchange.getName(),
+                mqProperties.getRoutingKey(),
+                queue.getName(), msgId, sendParams.getContent());
+
+        // 2.发送消息到mq服务器中（附带消息ID）
+        CorrelationData correlationData = new CorrelationData(msgId);
+        rabbitTemplate.convertAndSend(exchange.getName(), mqProperties.getRoutingKey(),
+                MsgHelper.objToMsg(new MsgDto(sendParams.getContent(), msgId)), correlationData);
+        return true;
+    }
+
+    /**
+     * 合并配置
      * @param properties
      */
-    private void bindProducer(MQProperties properties) {
-        try {
-            if (StrUtil.isBlank(properties.getProducer())) {
-                return;
-            }
-            AbsProducerService<?> producerService = SpringUtil.getBean(properties.getProducer());
-            producerService.setExchange(properties.getExchange().getName());
-            producerService.setRoutingKey(properties.getRoutingKey());
-            log.debug("绑定生产者: {}", properties.getProducer());
-        } catch (Exception e) {
-            log.warn("无法在容器中找到该生产者[{}]，若需要此生产者则需要做具体实现", properties.getConsumer());
+    public void merge (MQProperties properties) {
+        Queue queue = genQueue(properties);
+        Exchange exchange = genQueueExchange(properties);
+        queueBindExchange(queue, exchange, properties);
+        if (StringUtils.isNotBlank(properties.getConsumer())) {
+            bindConsumer(queue, exchange, properties);
         }
     }
+
 
     /**
      * 绑定消费者
@@ -309,5 +250,4 @@ public class RabbitMqConfig implements SmartInitializingSingleton {
         }
         return new Queue(queue.getName(), queue.isDurable(), queue.isExclusive(), queue.isAutoDelete(), arguments);
     }
-
 }

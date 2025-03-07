@@ -1,5 +1,6 @@
-package com.my.base.common.rabbitmq.comsumer;
+package com.my.base.common.rabbitmq.consumer.customize;
 
+import com.my.base.common.rabbitmq.consumer.ConsumerService;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
