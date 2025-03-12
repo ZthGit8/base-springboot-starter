@@ -1228,6 +1228,12 @@ public class RedisUtil {
                 destKey);
     }
 
+    /**
+     * 设置键值，如果键不存在，则设置键值，如果键存在，则不设置
+     * @param key
+     * @param value
+     * @return
+     */
     public static boolean setIfAbsent(String key, String value) {
         return Boolean.TRUE.equals(stringRedisTemplate.opsForValue().setIfAbsent(key, value));
     }
