@@ -41,8 +41,8 @@ spring:
       username: nacos
       password: nacos888
       config:
-        #        namespace: test
-        #        file-extension: yaml
+        namespace: test
+        file-extension: yaml
         import-check:
           enabled: false
       discovery:
