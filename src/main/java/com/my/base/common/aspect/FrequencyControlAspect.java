@@ -51,7 +51,7 @@ public class FrequencyControlAspect {
         List<FrequencyControlDTO> dtos = buildFrequencyControlDTOs(method, joinPoint, annotations);
         
         // 执行频控并返回结果
-        return FrequencyControlInvoke.executeWithFrequencyControlList(strategy, dtos, joinPoint::proceed);
+        return FrequencyControlInvoke.executeWithList(strategy, dtos, joinPoint::proceed);
     }
 
     /**
