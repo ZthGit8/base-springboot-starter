@@ -48,7 +48,7 @@ spring:
       discovery:
         namespace: test
         service: base-starter
-        ip: 192.168.88.21:8848
+        ip: 192.168.88.21
   rabbitmq:
     # 动态创建和绑定队列、交换机的配置
     modules:
