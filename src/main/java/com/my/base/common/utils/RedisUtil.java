@@ -157,6 +157,24 @@ public class RedisUtil {
     }
 
     /**
+     * 批量保存 hset 结构，使用HSET命令，redis4.0 推荐使用它替换 HMSET命令
+     * @param key
+     * @param map
+     */
+    public void hSetAllWithPipeline(String key, Map<String, Object> map) {
+        redisTemplate.executePipelined((RedisCallback<Long>) connection -> {
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                connection.hashCommands().hSet(
+                        key.getBytes(),
+                        entry.getKey().getBytes(),
+                        String.valueOf(entry.getValue()).getBytes()
+                );
+            }
+            return null;
+        });
+    }
+
+    /**
      * 指定缓存失效时间
      *
      * @param key  键
