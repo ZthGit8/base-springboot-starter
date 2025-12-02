@@ -19,9 +19,8 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 频控实现
@@ -31,6 +30,14 @@ import java.util.stream.Collectors;
 @Component
 public class FrequencyControlAspect {
 
+    // 缓存方法的注解信息
+    private final Map<Method, FrequencyControl[]> annotationCache = new ConcurrentHashMap<>();
+
+    // 缓存前缀信息
+    private final Map<Method, List<String>> prefixCache = new ConcurrentHashMap<>();
+
+    // 缓存DTO模板
+    private final Map<String, FrequencyControlDTO> dtoTemplateCache = new ConcurrentHashMap<>();
 
     /**
      * 环绕通知,处理带有FrequencyControl注解的方法
@@ -42,16 +49,18 @@ public class FrequencyControlAspect {
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         // 获取当前方法
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
-        // 获取方法上的所有FrequencyControl注解
-        FrequencyControl[] annotations = method.getAnnotationsByType(FrequencyControl.class);
-        
+        // 获取方法上的所有FrequencyControl注解（带缓存）
+        FrequencyControl[] annotations = annotationCache.computeIfAbsent(method,
+            m -> m.getAnnotationsByType(FrequencyControl.class));
+
         // 获取策略类型(所有注解使用相同策略)
-        String strategy = annotations[0].strategy(); 
+        String strategy = annotations[0].strategy();
+
         // 构建频控DTO列表
-        List<FrequencyControlDTO> dtos = buildFrequencyControlDTOs(method, joinPoint, annotations);
-        
+        List<FrequencyControlDTO> frequencyControlDTOList = buildFrequencyControlDTOs(method, joinPoint, annotations);
+
         // 执行频控并返回结果
-        return FrequencyControlInvoke.executeWithList(strategy, dtos, joinPoint::proceed);
+        return FrequencyControlInvoke.executeWithList(strategy, frequencyControlDTOList, joinPoint::proceed);
     }
 
     /**
@@ -62,29 +71,28 @@ public class FrequencyControlAspect {
      * @return 频控DTO列表
      */
     private List<FrequencyControlDTO> buildFrequencyControlDTOs(Method method, ProceedingJoinPoint joinPoint, FrequencyControl[] annotations) {
-        return Arrays.stream(annotations)
-            .map(annotation -> {
-                // 获取前缀
-                String prefix = getPrefix(method, annotation);
-                // 获取key
-                String key = getKey(method, joinPoint, annotation);
-                // 构建并返回DTO
-                return buildDTO(prefix + ":" + key, annotation);
-            })
-            .collect(Collectors.toList());
-    }
+        // 获取前缀列表（带缓存）
+        List<String> prefixes = prefixCache.computeIfAbsent(method, m -> {
+            List<String> prefixList = new ArrayList<>();
+            for (FrequencyControl annotation : annotations) {
+                String prefix = StrUtil.isBlank(annotation.prefixKey()) ?
+                    m.toGenericString() + ":index:" + Arrays.asList(annotations).indexOf(annotation) :
+                    annotation.prefixKey();
+                prefixList.add(prefix);
+            }
+            return prefixList;
+        });
 
-    /**
-     * 获取频控前缀
-     * @param method 方法
-     * @param annotation 注解
-     * @return 前缀
-     */
-    private String getPrefix(Method method, FrequencyControl annotation) {
-        // 如果注解未指定前缀,则使用方法签名+索引作为前缀
-        return StrUtil.isBlank(annotation.prefixKey()) ? 
-            method.toGenericString() + ":index:" + Arrays.asList(method.getAnnotationsByType(FrequencyControl.class)).indexOf(annotation) :
-            annotation.prefixKey();
+        List<FrequencyControlDTO> result = new ArrayList<>();
+        for (int i = 0; i < annotations.length; i++) {
+            FrequencyControl annotation = annotations[i];
+            // 获取key
+            String key = getKey(method, joinPoint, annotation);
+            // 构建并返回DTO（复用模板）
+            FrequencyControlDTO dto = buildDTOFromTemplate(prefixes.get(i) + ":" + key, annotation);
+            result.add(dto);
+        }
+        return result;
     }
 
     /**
@@ -110,23 +118,55 @@ public class FrequencyControlAspect {
     }
 
     /**
-     * 根据注解构建频控DTO
+     * 根据注解构建频控DTO（使用模板模式）
      * @param key 频控key
      * @param annotation 注解
      * @return 频控DTO
      */
-    private FrequencyControlDTO buildDTO(String key, FrequencyControl annotation) {
-        FrequencyControlDTO dto = switch (annotation.strategy()) {
+    private FrequencyControlDTO buildDTOFromTemplate(String key, FrequencyControl annotation) {
+        // 生成缓存键
+        String cacheKey = generateCacheKey(annotation);
+
+        // 从缓存中获取模板并克隆
+        FrequencyControlDTO template = dtoTemplateCache.computeIfAbsent(cacheKey, k -> createDTOTemplate(annotation));
+
+        // 设置具体key
+        template.setKey(key);
+        return template;
+    }
+
+    /**
+     * 生成DTO模板的缓存键
+     * @param annotation
+     * @return
+     */
+    private String generateCacheKey(FrequencyControl annotation) {
+        return annotation.strategy() + ":" +
+               annotation.count() + ":" +
+               annotation.time() + ":" +
+               annotation.unit() + ":" +
+               annotation.capacity() + ":" +
+               annotation.refillRate() + ":" +
+               annotation.windowSize() + ":" +
+               annotation.period();
+    }
+
+    /**
+     * 创建DTO模板
+     * @param annotation 注解
+     * @return DTO模板
+     */
+    private FrequencyControlDTO createDTOTemplate(FrequencyControl annotation) {
+        return switch (annotation.strategy()) {
             case FrequencyControlConstant.TOTAL_COUNT_WITH_IN_FIX_TIME -> {
                 // 构建固定窗口DTO
                 FixedWindowDTO fixedDto = new FixedWindowDTO();
                 fixedDto.setCount(annotation.count());
                 fixedDto.setTime(annotation.time());
                 fixedDto.setUnit(annotation.unit());
-                fixedDto.setOneKeyMultiplyControl(annotation.isOneKeyMultiplyControl());
                 yield fixedDto;
             }
-            case FrequencyControlConstant.TOKEN_BUCKET -> 
+            case FrequencyControlConstant.TOKEN_BUCKET ->
                 // 构建令牌桶DTO
                 new TokenBucketDTO(annotation.capacity(), annotation.refillRate());
             case FrequencyControlConstant.SLIDING_WINDOW -> {
@@ -140,9 +180,5 @@ public class FrequencyControlAspect {
             }
             default -> throw new IllegalArgumentException("Unknown strategy: " + annotation.strategy());
         };
-        
-        // 设置key并返回
-        dto.setKey(key);
-        return dto;
     }
 }

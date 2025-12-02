@@ -1,6 +1,5 @@
 package com.my.base.common.annotation;
 
-import com.my.base.common.enums.LockType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

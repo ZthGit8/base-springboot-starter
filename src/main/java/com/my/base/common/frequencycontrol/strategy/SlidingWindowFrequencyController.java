@@ -24,8 +24,7 @@ public class SlidingWindowFrequencyController extends AbstractFrequencyControlSe
     public boolean reachRateLimit(Map<String, SlidingWindowDTO> frequencyControlMap) {
         // 批量获取redis统计的值
         List<String> frequencyKeys = new ArrayList<>(frequencyControlMap.keySet());
-        for (int i = 0; i < frequencyKeys.size(); i++) {
-            String key = frequencyKeys.get(i);
+        for (String key : frequencyKeys) {
             SlidingWindowDTO controlDTO = frequencyControlMap.get(key);
             // 获取窗口时间内计数
             Long count = RedisUtil.ZSetGet(key);
@@ -42,8 +41,7 @@ public class SlidingWindowFrequencyController extends AbstractFrequencyControlSe
 
     public void addFrequencyControlStatisticsCount(Map<String, SlidingWindowDTO> frequencyControlMap) {
         List<String> frequencyKeys = new ArrayList<>(frequencyControlMap.keySet());
-        for (int i = 0; i < frequencyKeys.size(); i++) {
-            String key = frequencyKeys.get(i);
+        for (String key : frequencyKeys) {
             SlidingWindowDTO controlDTO = frequencyControlMap.get(key);
             // 窗口最小周期转秒
             long period = controlDTO.getUnit().toMillis(controlDTO.getPeriod());
@@ -51,8 +49,8 @@ public class SlidingWindowFrequencyController extends AbstractFrequencyControlSe
             // 窗口大小 单位 秒
             long length = period * controlDTO.getWindowSize();
             long start = current - length;
-//            long expireTime = length + period;
-            RedisUtil.ZSetAddAndExpire(key, start, length, current);
+            long expireTime = length + period;
+            RedisUtil.ZSetAddAndExpire(key, start, expireTime, current);
         }
     }
 
