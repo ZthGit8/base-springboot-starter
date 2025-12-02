@@ -27,8 +27,4 @@ public class FrequencyControlDTO {
      * @return 次数
      */
     private Integer count;
-    /**
-     * 是否对同一个key进行多个频控处理
-     */
-    private boolean isOneKeyMultiplyControl;
 }

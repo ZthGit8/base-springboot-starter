@@ -76,12 +76,6 @@ public @interface FrequencyControl {
 
     double refillRate() default 0.5; // 每秒补充的令牌数
 
-    /**
-     * 是否对同一个key进行多个频控处理
-     * @return
-     */
-    boolean isOneKeyMultiplyControl() default false;
-
     enum Target {
         UID,
         IP,

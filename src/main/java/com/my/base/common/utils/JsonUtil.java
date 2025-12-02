@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Description:
@@ -66,6 +67,14 @@ public class JsonUtil {
         try {
             return jsonMapper.writeValueAsString(t);
         } catch (Exception e) {
+            throw new UnsupportedOperationException(e);
+        }
+    }
+
+    public static <K, V> Map<K, V> toMap(String str, Class<K> keyClass, Class<V> valueClass) {
+        try {
+            return jsonMapper.readValue(str, new TypeReference<Map<K, V>>() {});
+        } catch (JsonProcessingException e) {
             throw new UnsupportedOperationException(e);
         }
     }

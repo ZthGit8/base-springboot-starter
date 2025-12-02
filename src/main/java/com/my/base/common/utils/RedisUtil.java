@@ -29,21 +29,26 @@ public class RedisUtil {
         RedisUtil.redisTemplate = (RedisTemplate<String,Object>) SpringUtil.getBean(RedisTemplate.class);
     }
 
-    /**
-     *
-     */
+   // Lua脚本：固定窗口原子操作
     private static final String LUA_INCR_EXPIRE =
-            "local key = KEYS[1]\n" +
-                    "local ttl = tonumber(ARGV[1])\n" +
-                    "\n" +
-                    "if ttl == nil then\n" +
-                    "end\n" +
-                    "if redis.call('EXISTS', key) == 0 then\n" +
-                    "  redis.call('SETEX', key, ttl, 1)\n" +
-                    "  return 1\n" +
-                    "else\n" +
-                    "  return redis.call('INCR', key)\n" +
-                    "end";
+            "local key,ttl=KEYS[1],ARGV[1] \n" +
+            "if redis.call('EXISTS',key)==0 then \n" +
+            "  redis.call('SETEX',key,ttl,1) \n" +
+            "  return 1 \n" +
+            "else \n" +
+            "  return tonumber(redis.call('INCR',key)) \n" +
+            "end ";
+
+    // Lua脚本：滑动窗口原子操作
+    private static final String LUA_SLIDING_WINDOW =
+            "local key,startTime,expireTime,currentTime=KEYS[1],tonumber(ARGV[1]),tonumber(ARGV[2]),tonumber(ARGV[3]) \n" +
+            " \n" +
+            "-- 添加当前时间的元素\n" +
+            "redis.call('ZADD', key, currentTime, tostring(currentTime))\n" +
+            "-- 删除周期之前的数据\n" +
+            "redis.call('ZREMRANGEBYSCORE', key, 0, startTime)\n" +
+            "-- 设置过期时间\n" +
+            "redis.call('EXPIRE', key, expireTime)";
 
     /**
      * 释放分布式锁
@@ -139,12 +144,26 @@ public class RedisUtil {
      * @param expireTime
      * @param currentTime
      */
+//    public static void ZSetAddAndExpire(String key, long startTime, long expireTime, long currentTime) {
+//        stringRedisTemplate.opsForZSet().add(key, String.valueOf(currentTime), currentTime);
+//        // 删除周期之前的数据
+//        stringRedisTemplate.opsForZSet().removeRangeByScore(key, 0, startTime);
+//        // 过期时间窗口长度+时间间隔
+//        stringRedisTemplate.expire(key, expireTime, TimeUnit.MILLISECONDS);
+//    }
+
+    /**
+     * 滑动窗口处理数据(原子操作)
+     * @param key
+     * @param startTime
+     * @param expireTime
+     * @param currentTime
+     * @return 当前窗口内元素数量
+     */
     public static void ZSetAddAndExpire(String key, long startTime, long expireTime, long currentTime) {
-        stringRedisTemplate.opsForZSet().add(key, String.valueOf(currentTime), currentTime);
-        // 删除周期之前的数据
-        stringRedisTemplate.opsForZSet().removeRangeByScore(key, 0, startTime);
-        // 过期时间窗口长度+时间间隔
-        stringRedisTemplate.expire(key, expireTime, TimeUnit.MILLISECONDS);
+        RedisScript<Long> redisScript = new DefaultRedisScript<>(LUA_SLIDING_WINDOW, Long.class);
+         stringRedisTemplate.execute(redisScript, Collections.singletonList(key),
+                String.valueOf(startTime), String.valueOf(expireTime), String.valueOf(currentTime));
     }
 
     /**

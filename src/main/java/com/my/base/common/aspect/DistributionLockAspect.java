@@ -11,7 +11,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -23,21 +22,29 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Description: 分布式锁切面
- * Author: <a href="https://github.com/zongzibinbin">abin</a>
- * Date: 2023-04-20
  */
 @Slf4j
 @Aspect
 @Component
 @Order(0)//确保比事务注解先执行，分布式锁在事务外
 public class DistributionLockAspect {
-    @Autowired
-    private ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
 
     Map<String, LockService> lockServiceMap = new HashMap<>();
+
+    // 添加缓存：方法元数据缓存
+    private final Map<Method, MethodMetadata> methodMetadataCache = new ConcurrentHashMap<>();
+
+    // 添加缓存：Hash值缓存
+    private final Map<String, String> hashCache = new ConcurrentHashMap<>();
+
+    public DistributionLockAspect(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
 
     @PostConstruct
     public void init() {
@@ -45,8 +52,8 @@ public class DistributionLockAspect {
                 (name, service) -> lockServiceMap.put(service.getLockType(), service)
         );
     }
-    
-    // 环绕通知，用于处理带有DistributionLock注解的方法
+
+    // 环环通知，用于处理带有DistributionLock注解的方法
     @Around("@annotation(com.my.base.common.annotation.DistributionLock)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         // 获取当前方法
@@ -59,11 +66,14 @@ public class DistributionLockAspect {
             throw new IllegalStateException("DistributionLock annotation not found");
         }
 
+        // 从缓存中获取或创建方法元数据
+        MethodMetadata metadata = methodMetadataCache.computeIfAbsent(method, this::createMethodMetadata);
+
         // 确定锁的前缀键，如果注解中未指定，则使用SpEl表达式生成的方法键
         String prefix = StrUtil.isBlank(distributionLock.prefixKey()) ? SpElUtil.getMethodKey(method) : distributionLock.prefixKey();
 
         // 获取锁的键
-        String key = getLockKey(joinPoint, method);
+        String key = getLockKey(joinPoint, method, metadata);
 
         // 根据注解中指定的锁类型获取对应的LockService实现
         LockService lockService = Optional.ofNullable(lockServiceMap.get(distributionLock.useLockType()))
@@ -82,10 +92,10 @@ public class DistributionLockAspect {
         }
     }
 
-    private String getLockKey(ProceedingJoinPoint joinPoint, Method method) {
+    private String getLockKey(ProceedingJoinPoint joinPoint, Method method, MethodMetadata metadata) {
         Object[] args = joinPoint.getArgs();
         List<String> keyParts = new ArrayList<>();
-        if (hasLineFieldLock(method)) {
+        if (metadata.hasLineFieldLock) {
             // 获取参数注解
             Annotation[][] parameterAnnotations = method.getParameterAnnotations();
 
@@ -106,7 +116,7 @@ public class DistributionLockAspect {
 
             // 使用 String.join 简化字符串拼接
             return String.join(":", keyParts);
-        } else if (hasBeanFieldLock(method)) {
+        } else if (metadata.hasBeanFieldLock) {
 
             Class<?>[] parameterTypes = method.getParameterTypes();
 
@@ -129,9 +139,26 @@ public class DistributionLockAspect {
             // 使用 String.join 简化字符串拼接
             return String.join(":", keyParts);
         } else {
-
-            return method.getAnnotation(DistributionLock.class).key();
+            try {
+                return SpElUtil.parseSpEl(method, joinPoint.getArgs(), method.getAnnotation(DistributionLock.class).key());
+            } catch (IllegalAccessException e) {
+                log.error("Error parsing SpEl expression: {}", e.getMessage());
+                // 直接抛出异常
+                throw new RuntimeException(e);
+            }
         }
+    }
+
+    /**
+     * 创建方法元数据并缓存
+     * @param method
+     * @return
+     */
+    private MethodMetadata createMethodMetadata(Method method) {
+        MethodMetadata metadata = new MethodMetadata();
+        metadata.hasLineFieldLock = hasLineFieldLock(method);
+        metadata.hasBeanFieldLock = hasBeanFieldLock(method);
+        return metadata;
     }
 
     /**
@@ -168,17 +195,27 @@ public class DistributionLockAspect {
 
 
     /**
-     * 哈希敏感数据的方法
+     * 哈希敏感数据的方法，增加缓存机制
      *
      * @param data
      * @return
      */
     private String hashSensitiveData(String data) {
+        // 先尝试从缓存中获取
+        return hashCache.computeIfAbsent(data, this::computeHash);
+    }
+
+    /**
+     * 计算哈希值的实际方法
+     * @param data
+     * @return
+     */
+    private String computeHash(String data) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] encodedhash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder(2 * encodedhash.length);
-            for (byte b : encodedhash) {
+            byte[] encodedHash = digest.digest(data.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder(2 * encodedHash.length);
+            for (byte b : encodedHash) {
                 String hex = Integer.toHexString(0xff & b);
                 if (hex.length() == 1) {
                     hexString.append('0');
@@ -189,6 +226,14 @@ public class DistributionLockAspect {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error hashing sensitive data", e);
         }
+    }
+
+    /**
+     * 方法元数据类，用于缓存方法相关信息
+     */
+    private static class MethodMetadata {
+        boolean hasLineFieldLock;
+        boolean hasBeanFieldLock;
     }
 
 }

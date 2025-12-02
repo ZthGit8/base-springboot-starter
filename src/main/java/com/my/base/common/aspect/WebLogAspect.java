@@ -23,17 +23,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
  * 日志切面
- *
- * @author wayne
  */
 @Aspect
 @Slf4j
@@ -41,12 +41,18 @@ import java.util.stream.Stream;
 @ConditionalOnProperty(name = "my.base.log-print-enable", havingValue = "true")
 public class WebLogAspect {
 
-    @Qualifier("commonThreadPoolExecutor")
-    @Autowired
-    private ThreadPoolExecutor threadPoolExecutor;
+    private final ThreadPoolExecutor threadPoolExecutor;
 
-    @Autowired
-    private ApplicationContext applicationContext;
+    private final ApplicationContext applicationContext;
+
+    // 添加缓存：存储方法参数信息
+    private final Map<Method, List<ParameterInfo>> methodParamCache = new ConcurrentHashMap<>();
+
+    public WebLogAspect(@Qualifier("commonThreadPoolExecutor") ThreadPoolExecutor threadPoolExecutor, ApplicationContext applicationContext) {
+        this.threadPoolExecutor = threadPoolExecutor;
+        this.applicationContext = applicationContext;
+    }
+
     /**
      * 接收到请求，记录请求内容
      * 所有controller包下所有的类的方法，都是切点
@@ -72,17 +78,15 @@ public class WebLogAspect {
                 .toList();
         // 获取方法签名
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        // 获取方法参数
-        Parameter[] parameters = signature.getMethod().getParameters();
+        // 获取方法参数信息（使用缓存）
+        List<ParameterInfo> parameterInfos = getMethodParameterInfos(signature.getMethod(), signature.getMethod().getParameters());
+
         // 创建一个列表来存储参数信息
         List<ParamInfo> paramInfoList = new ArrayList<>();
-        for (int i = 0; i < parameters.length; i++) {
-            // 跳过HttpServletRequest和HttpServletResponse参数
-            if (paramList.get(i) instanceof HttpServletRequest || paramList.get(i) instanceof HttpServletResponse){
-                continue;
-            }
+        for (int i = 0; i < parameterInfos.size(); i++) {
+            ParameterInfo paramInfo = parameterInfos.get(i);
             // 将参数名和参数值组合并添加到列表中
-            paramInfoList.add(new ParamInfo(parameters[i].getType(), parameters[i], paramList.get(i)));
+            paramInfoList.add(new ParamInfo(paramInfo.paramType, paramInfo.parameter, paramList.get(i)));
         }
 
         // 把参数名和参数值组装成map
@@ -122,6 +126,26 @@ public class WebLogAspect {
         return result;
     }
 
+    /**
+     * 获取方法参数信息（带缓存）
+     * @param method 方法
+     * @param parameters 参数数组
+     * @return 参数信息列表
+     */
+    private List<ParameterInfo> getMethodParameterInfos(Method method, Parameter[] parameters) {
+        return methodParamCache.computeIfAbsent(method, m -> {
+            List<ParameterInfo> paramInfos = new ArrayList<>();
+            for (int i = 0; i < parameters.length; i++) {
+                Parameter parameter = parameters[i];
+                // 跳过HttpServletRequest和HttpServletResponse参数
+                if (parameter.getType() == HttpServletRequest.class || parameter.getType() == HttpServletResponse.class) {
+                    continue;
+                }
+                paramInfos.add(new ParameterInfo(parameter.getType(), parameter));
+            }
+            return paramInfos;
+        });
+    }
 
     @Data
     @AllArgsConstructor
@@ -129,5 +153,18 @@ public class WebLogAspect {
         private Class<?> paramType;
         private Parameter parameter;
         private Object value;
+    }
+
+    /**
+     * 参数信息类（用于缓存）
+     */
+    private static class ParameterInfo {
+        private final Class<?> paramType;
+        private final Parameter parameter;
+
+        public ParameterInfo(Class<?> paramType, Parameter parameter) {
+            this.paramType = paramType;
+            this.parameter = parameter;
+        }
     }
 }

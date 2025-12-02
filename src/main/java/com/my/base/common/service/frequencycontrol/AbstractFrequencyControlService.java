@@ -55,15 +55,8 @@ public abstract class AbstractFrequencyControlService<K extends FrequencyControl
     public <T> T executeWithFrequencyControlList(List<K> frequencyControlList, SupplierThrowWithoutParam<T> supplier) throws Throwable {
         boolean existsFrequencyControlHasNullKey = frequencyControlList.stream().anyMatch(frequencyControl -> ObjectUtils.isEmpty(frequencyControl.getKey()));
         AssertUtil.isFalse(existsFrequencyControlHasNullKey, "限流策略的Key字段不允许出现空值");
-        // 允许一个key有多个限流规则的集合
-        List<K> oneKeyMultiplyControlList = frequencyControlList.stream().filter(FrequencyControlDTO::isOneKeyMultiplyControl).toList();
-        // 获取 frequencyControlList 和 oneKeyMultiplyControlList 的差集（一个key只能有一个限流规则的集合）
-        List<K> oneKeyMultiplyControlListDiff = frequencyControlList.stream().filter(frequencyControl -> !oneKeyMultiplyControlList.contains(frequencyControl)).toList();
-        // 去重有只允许一个限流规则的集合
-        Map<String, K> frequencyControlDTOMap = oneKeyMultiplyControlListDiff.stream().collect(Collectors.groupingBy(K::getKey, Collectors.collectingAndThen(Collectors.toList(), list -> list.get(0))));
-        // 合并
-        frequencyControlDTOMap.putAll(oneKeyMultiplyControlList.stream().collect(Collectors.toMap(K::getKey, Function.identity())));
-
+        // 去重，一个key只能有一个限流规则
+        Map<String, K> frequencyControlDTOMap = frequencyControlList.stream().collect(Collectors.groupingBy(K::getKey, Collectors.collectingAndThen(Collectors.toList(), List::getFirst)));
         return executeWithFrequencyControlMap(frequencyControlDTOMap, supplier);
     }
 
