@@ -46,6 +46,7 @@
         <swagger.version>2.2.22</swagger.version>
         <knife4j.version>4.5.0</knife4j.version>
         <mysql.connector.version>8.0.33</mysql.connector.version>
+        <poi.version>5.2.5</poi.version>
     </properties>
 
     <dependencyManagement>
@@ -203,6 +204,22 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>${caffeine.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-excelant</artifactId>
+            <version>${poi.version}</version>
         </dependency>
 
     </dependencies>

@@ -1,8 +1,8 @@
 package com.my.base.config;
 
 import feign.RequestInterceptor;
-import com.my.base.common.context.RequestContext;
-import com.my.base.common.interceptor.domain.RequestInfo;
+import com.my.base.web.context.RequestContext;
+import com.my.base.web.domain.RequestInfo;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

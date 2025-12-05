@@ -1,7 +1,7 @@
 package com.my.base.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.my.base.common.interceptor.WebRequestInterceptor;
+import com.my.base.web.interceptor.WebRequestInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;

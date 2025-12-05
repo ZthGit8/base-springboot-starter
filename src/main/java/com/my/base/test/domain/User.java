@@ -1,6 +1,6 @@
 package com.my.base.test.domain;
 
-import com.my.base.common.annotation.LockField;
+import com.my.base.shared.annotation.LockField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
 import lombok.AllArgsConstructor;
