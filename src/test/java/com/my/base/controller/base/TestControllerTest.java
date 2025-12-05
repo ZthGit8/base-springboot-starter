@@ -1,11 +1,10 @@
 package com.my.base.controller.base;
 
-import com.my.base.common.interceptor.domain.RequestInfo;
-import com.my.base.common.utils.I18nMessageUtil;
-import com.my.base.common.utils.RedisUtil;
 import com.my.base.config.MybatisConfig;
+import com.my.base.shared.util.RedisUtil;
 import com.my.base.test.dao.UserDao;
 import com.my.base.test.domain.User;
+import com.my.base.web.domain.RequestInfo;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;

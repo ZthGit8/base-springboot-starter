@@ -1,6 +1,6 @@
 package com.my.base.config.property;
 
-import com.my.base.common.rabbitmq.constants.RabbitExchangeTypeEnum;
+import com.my.base.infra.mq.rabbitmq.constants.RabbitExchangeTypeEnum;
 import lombok.Data;
 
 import java.util.Map;

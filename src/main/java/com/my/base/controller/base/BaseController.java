@@ -1,7 +1,7 @@
 package com.my.base.controller.base;
 
-import com.my.base.common.annotation.DistributionLock;
-import com.my.base.common.service.cache.TestCache;
+import com.my.base.shared.annotation.DistributionLock;
+import com.my.base.infra.cache.TestCache;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

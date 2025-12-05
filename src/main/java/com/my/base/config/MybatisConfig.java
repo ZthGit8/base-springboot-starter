@@ -2,8 +2,7 @@ package com.my.base.config;
 
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import com.my.base.common.interceptor.MybatisPlusAllSqlLog;
-import com.my.base.common.interceptor.SqlStatementInterceptor;
+import com.my.base.persistence.mybatis.MybatisPlusAllSqlLog;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

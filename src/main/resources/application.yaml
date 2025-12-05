@@ -12,7 +12,7 @@ server:
 spring:
   datasource:
     username: root
-    password: mysqlRootPassword
+    password: aePvJHn7zxaxbnmE0i8p1bgJsjWVnGrT
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://192.168.88.21:3308/jtr_havefun?characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true
     hikari:
@@ -24,7 +24,7 @@ spring:
       database: 5
       host: 192.168.88.21
       port: 6380
-      password: redispasswd
+      password: Ah8mm6tgE0vSv2aadIELqdHAAohgbFYl
       lettuce:
         pool:
           max-active: 20
@@ -36,7 +36,7 @@ spring:
     nacos:
       server-addr: 192.168.88.21:8848
       username: nacos
-      password: nacos888
+      password: OrbD7NI7ihgVL1a6lYvLGSdmvYX0OFSm
       config:
         #        namespace: test
         #        file-extension: yaml
@@ -75,8 +75,8 @@ spring:
 
     host: 192.168.88.21
     port: 5672
-    username: guest
-    password: guest
+    username: rabbit
+    password: 23Dl4uLzlJZVnIlbiyMd7AcR7kzrL4DG
     publisher-confirm-type: correlated
     virtual-host: /
     ssl:
