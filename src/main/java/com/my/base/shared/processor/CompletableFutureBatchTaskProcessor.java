@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * 基于 CompletableFuture 的批量任务处理器：支持任务分片、并发执行、阶段协同、进度监控、结果汇总
@@ -71,7 +70,7 @@ public class CompletableFutureBatchTaskProcessor<T> {
 
         // 2. 为每个分片提交一个异步任务
         // 使用工具类并行执行每个分片任务并等待
-        List<Void> shardResults = CompletableFutureUtil.parallelFutureJoin(
+        CompletableFutureUtil.parallelFutureJoin(
                 taskShards,
                 shard -> {
                     for (T task : shard) {
@@ -107,91 +106,6 @@ public class CompletableFutureBatchTaskProcessor<T> {
         return new BatchResult<>(completedCount.get(), failedCount.get(), resultList);
     }
 
-    /**
-     * 进阶方法：分阶段批量任务（读取 → 处理 → 汇总），用 allOf 作为阶段屏障
-     *
-     * @param taskList       原始任务列表
-     * @param readHandler    读取阶段处理器
-     * @param processHandler 处理阶段处理器
-     * @param summaryHandler 汇总阶段处理器
-     * @return 最终汇总结果
-     * @throws InterruptedException 线程中断异常
-     */
-    public String executePhasedBatchTasks(List<T> taskList,
-                                          TaskHandler<T> readHandler,
-                                          TaskHandler<T> processHandler,
-                                          SummaryHandler<T> summaryHandler) throws InterruptedException {
-        if (taskList == null || taskList.isEmpty()) {
-            return "无任务可执行";
-        }
-
-        // 任务分片
-        List<List<T>> taskShards = splitTask(taskList, batchSize);
-        int shardCount = taskShards.size();
-
-        System.out.println("📋 分阶段批量任务开始执行：");
-        System.out.println(" - 总任务数：" + taskList.size());
-        System.out.println(" - 分片数：" + shardCount);
-
-        // 阶段一：读取（并行执行，每分片）
-        CompletableFutureUtil.parallelFutureJoin(
-                taskShards,
-                shard -> {
-                    for (T task : shard) {
-                        try {
-                            readHandler.process(task);
-                        } catch (Exception e) {
-                            System.err.println("读取阶段异常：" + e.getMessage());
-                        }
-                    }
-                    return null;
-                },
-                (ex, shard) -> {
-                    System.err.println("读取阶段分片异常：" + ex.getMessage());
-                    return null;
-                }
-        );
-
-        // 阶段二：处理（并行执行，每分片）
-        CompletableFutureUtil.parallelFutureJoin(
-                taskShards,
-                shard -> {
-                    for (T task : shard) {
-                        try {
-                            processHandler.process(task);
-                        } catch (Exception e) {
-                            System.err.println("处理阶段异常：" + e.getMessage());
-                        }
-                    }
-                    return null;
-                },
-                (ex, shard) -> {
-                    System.err.println("处理阶段分片异常：" + ex.getMessage());
-                    return null;
-                }
-        );
-
-        // 阶段三：汇总（并行执行，每分片）
-        CompletableFutureUtil.parallelFutureJoin(
-                taskShards,
-                shard -> {
-                    try {
-                        summaryHandler.summary(shard);
-                    } catch (Exception e) {
-                        System.err.println("汇总阶段异常：" + e.getMessage());
-                    }
-                    return null;
-                },
-                (ex, shard) -> {
-                    System.err.println("汇总阶段分片异常：" + ex.getMessage());
-                    return null;
-                }
-        );
-
-        executorService.shutdown();
-        // 最终汇总结果
-        return summaryHandler.getFinalSummary();
-    }
 
     /**
      * 进阶方法重载：分阶段批量任务（读取→处理→汇总），阶段间通过泛型结果协同（CompletableFuture实现）
