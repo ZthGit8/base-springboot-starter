@@ -12,9 +12,9 @@ server:
 spring:
   datasource:
     username: root
-    password: aePvJHn7zxaxbnmE0i8p1bgJsjWVnGrT
+    password: xxx
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.88.21:3308/jtr_havefun?characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true
+    url: jdbc:mysql://xxx:3308/xxx?characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true
     hikari:
       minimum-idle: 3
       maximum-pool-size: 10
@@ -22,7 +22,7 @@ spring:
   data:
     redis:
       database: 5
-      host: 192.168.88.21
+      host: xxx
       port: 6380
       password: Ah8mm6tgE0vSv2aadIELqdHAAohgbFYl
       lettuce:
@@ -34,7 +34,7 @@ spring:
       timeout: 30s
   cloud:
     nacos:
-      server-addr: 192.168.88.21:8848
+      server-addr: xxx
       username: nacos
       password: OrbD7NI7ihgVL1a6lYvLGSdmvYX0OFSm
       config:
@@ -45,7 +45,7 @@ spring:
       discovery:
         namespace: test
         service: base-starter
-        ip: 192.168.88.21:8848
+        ip: xxx
   rabbitmq:
     # 动态创建和绑定队列、交换机的配置
     modules:
@@ -73,7 +73,7 @@ spring:
         exchange:
           name: dead
 
-    host: 192.168.88.21
+    host: xxx
     port: 5672
     username: rabbit
     password: 23Dl4uLzlJZVnIlbiyMd7AcR7kzrL4DG
